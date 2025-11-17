@@ -50,12 +50,12 @@ const CustomModal = ({
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       {/* overlay that covers the entire viewport */}
-      <DialogOverlay className="fixed inset-0 bg-black/50 z-[9998]" />
+      <DialogOverlay className="fixed inset-0 bg-black/50 z-9998" />
 
       {/* content on top */}
       <DialogContent
         className={cn(
-          " z-[9999] px-14",
+          " z-9999 px-14",
           "[&>button[data-slot='dialog-close']]:mr-10",
           "[&>button[data-slot='dialog-close']_svg]:size-8",
           "[&>button[data-slot='dialog-close']]:cursor-pointer",

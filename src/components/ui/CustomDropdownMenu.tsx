@@ -92,7 +92,7 @@ const CustomDropdownMenu = ({
 
         <DropdownMenuContent
           align="start"
-          className={`space-y-2 z-[10000] ${widthClass ?? ""}`}
+          className={`space-y-2 z-10000 ${widthClass ?? ""}`}
           style={
             widthClass
               ? undefined
@@ -127,8 +127,8 @@ const CustomDropdownMenu = ({
                 }}
                 className={`cursor-pointer py-3 ${
                   value === item.value
-                    ? "bg-secondary-2 text-white font-semibold data-[highlighted]:bg-secondary-2 data-[highlighted]:text-white"
-                    : "data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground font-normal"
+                    ? "bg-secondary-2 text-white font-semibold data-highlighted:bg-secondary-2 data-highlighted:text-white"
+                    : "data-highlighted:bg-accent data-highlighted:text-accent-foreground font-normal"
                 }`}
               >
                 {item.label}
