@@ -2,13 +2,7 @@ import { z } from "zod";
 
 export const signInSchema = z.object({
   email: z.email("Enter a valid email"),
-  password: z
-    .string()
-    .min(2, "Password must be at least 8 characters long"),
-    // .regex(
-    //   /[!@#$%^&*(),.?":{}|<>]/,
-    //   "Password must contain at least one special character"
-    // ),
+  password: z.string().min(2, "Password must be at least 8 characters long"),
   remember: z.boolean().optional(),
 });
 
