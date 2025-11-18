@@ -44,7 +44,7 @@ export default function LoginForm() {
 
       if (res?.ok) {
         toast.success("Login successful!");
-        // router.push(callbackUrl);
+        router.push(callbackUrl);
       }
       // On successful login, redirect to callbackUrl
       // router.push(callbackUrl);
