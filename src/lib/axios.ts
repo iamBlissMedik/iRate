@@ -1,10 +1,17 @@
-import Axios from "axios";
+import Axios, {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from "axios";
 import { getSession, signOut } from "next-auth/react";
 
-// Extend Session type
-type CustomSession = {
-  accessToken?: string;
-} & NonNullable<Awaited<ReturnType<typeof getSession>>>;
+interface RefreshResponse {
+  accessToken: string;
+}
+
+interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
 
 const axiosInstance = Axios.create({
   baseURL: `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1`,
@@ -12,47 +19,67 @@ const axiosInstance = Axios.create({
   timeout: 15000,
 });
 
-// Attach access token on every request
-axiosInstance.interceptors.request.use(async (config) => {
-  const session = (await getSession()) as CustomSession | null;
-  const token = session?.accessToken;
+// Routes that should not trigger refresh
+const authExcluded: string[] = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/forgot-password",
+];
 
-  if (token && config.headers) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Attach access token per request
+axiosInstance.interceptors.request.use(
+  async (
+    config: InternalAxiosRequestConfig
+  ): Promise<InternalAxiosRequestConfig> => {
+    const session = await getSession();
+    const token = session?.user.accessToken as string | undefined;
+
+    if (token && config.headers) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   }
+);
 
-  return config;
-});
-
-// Handle refresh on 401 responses
+// Handle automatic refresh
 axiosInstance.interceptors.response.use(
-  (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  (response: AxiosResponse): AxiosResponse => response,
+  async (error: AxiosError) => {
+    const originalRequest = error.config as ExtendedAxiosRequestConfig;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-
-      try {
-        // Call backend /refresh route
-        const { data } = await Axios.post(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/refresh`,
-          null,
-          { withCredentials: true }
-        );
-
-        const newAccessToken = data?.accessToken;
-
-        // Retry original request with new token
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return axiosInstance(originalRequest);
-      } catch (refreshErr) {
-        await signOut();
-        return Promise.reject(refreshErr);
-      }
+    if (
+      !error.response ||
+      error.response.status !== 401 ||
+      originalRequest._retry
+    ) {
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    // Skip refresh logic for auth endpoints
+    if (authExcluded.some((route) => originalRequest.url?.includes(route))) {
+      return Promise.reject(error);
+    }
+
+    originalRequest._retry = true;
+
+    try {
+      const refreshResponse = await Axios.post<RefreshResponse>(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/auth/refresh`,
+        null,
+        { withCredentials: true }
+      );
+
+      const newAccessToken = refreshResponse.data.accessToken;
+
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+      }
+
+      return axiosInstance(originalRequest);
+    } catch (refreshError) {
+      await signOut({ callbackUrl: "/auth/login" });
+      return Promise.reject(refreshError);
+    }
   }
 );
 
