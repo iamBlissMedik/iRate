@@ -50,7 +50,7 @@ export default function InputField<T extends FieldValues>({
       {label && (
         <Label
           htmlFor={id}
-          className="mb-1 capitalize text-lg font-normal text-primary"
+          className="mb-1 capitalize text-lg font-normal text-foreground"
         >
           {label}
         </Label>

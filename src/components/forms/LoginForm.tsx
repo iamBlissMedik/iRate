@@ -10,6 +10,7 @@ import CheckboxField from "./CheckboxField";
 import { ThemeToggle } from "@/components/ThemeToggleButton";
 import { signIn } from "next-auth/react";
 import toast from "react-hot-toast";
+import { handleAxiosError } from "@/lib/errors/handleAxiosError";
 export default function LoginForm() {
   const search = useSearchParams();
   const router = useRouter();
@@ -38,7 +39,6 @@ export default function LoginForm() {
 
       if (res?.error) {
         toast.error(res.error); // Show structured error toast
-        //   setError("password", { type: "manual", message: "Invalid credentials" });
         return;
       }
 
@@ -46,21 +46,19 @@ export default function LoginForm() {
         toast.success("Login successful!");
         router.push(callbackUrl);
       }
-      // On successful login, redirect to callbackUrl
-      // router.push(callbackUrl);
     } catch (error) {
-
       // Handle login error (e.g., show error message)
       console.error("Login failed:", error);
+      handleAxiosError(error);
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#26021e]">
-      <div className="w-full max-w-md space-y-4 border text-center rounded pt-7 pb-14 px-9 bg-white">
+      <div className="w-full max-w-md space-y-4 border text-center rounded pt-7 pb-14 px-9 bg-background">
         <ThemeToggle />
         <div className="flex justify-center"></div>
-        <h1 className="text-2xl font-semibold text-[#000000]">Admin Login</h1>
+        <h1 className="text-2xl font-semibold text-foreground">Admin Login</h1>
         <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <InputField
             id="email"
