@@ -3,7 +3,7 @@
 
 const Sidebar = () => {
   return (
-    <div>Sidebar</div>
+    <div>Sidebar q</div>
   );
 };
 
