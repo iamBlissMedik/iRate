@@ -8,7 +8,6 @@ import { sidebarLinks } from "@/constants/navLinks";
 
 export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const pathname = usePathname();
 
   return (
@@ -22,40 +21,35 @@ export default function Sidebar() {
         {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
       </button>
 
-      {/* Sidebar */}
+      {/* SIDEBAR */}
       <aside
         className={`
-          fixed top-0 left-0 h-screen z-40
-          flex flex-col justify-between shadow-md
+          fixed top-0 left-0 h-screen z-40 flex flex-col justify-between
+          shadow-md bg-sidebar text-sidebar-foreground
           transition-all duration-300 ease-in-out
+
+          /* Mobile slide behavior (unchanged) */
           ${isMobileOpen ? "translate-x-0" : "-translate-x-full"}
           lg:translate-x-0
-          ${isHovered ? "lg:w-64" : "lg:w-20"}
+
+          /* Desktop & Tablet always full width */
           w-64
+          lg:w-64
+
           bg-sidebar text-sidebar-foreground
         `}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
       >
         {/* Top Section */}
         <div className="flex-1 overflow-y-auto">
           {/* Header / Logo */}
-          <div className="p-4 border-b border-sidebar-border min-h-[100px] flex flex-col justify-center">
-            {/* Expanded logo */}
-            <div className={`transition-opacity duration-300 ${isHovered ? "lg:opacity-100" : "lg:opacity-0 lg:hidden"}`}>
-              <h1 className="text-xl font-bold text-center">IRATE</h1>
-              <p className="text-center text-sidebar-accent-foreground text-sm mt-1">
-                Admin Panel
-              </p>
-            </div>
-
-            {/* Collapsed logo */}
-            <div className={`${isHovered ? "lg:hidden" : "lg:flex"} hidden justify-center`}>
-              <div className="w-10 h-10 bg-sidebar-primary rounded-(--radius-md) flex items-center justify-center">
-                <span className="text-sidebar-primary-foreground font-bold text-lg">I</span>
-              </div>
+          <div className="p-4 border-b border-sidebar-border min-h-[100px] flex flex-col justify-center items-center">
+            {/* Full logo (always centered) */}
+            <div className="text-center transition-opacity duration-300">
+              <h1 className="text-xl font-bold">IRATE</h1>
+              <p className="text-sidebar-accent-foreground text-sm mt-1">Admin Panel</p>
             </div>
           </div>
+
 
           {/* Navigation Links */}
           <nav className="mt-6 px-2">
@@ -76,17 +70,12 @@ export default function Sidebar() {
                             ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
                             : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                           }
-                          ${isHovered ? "" : "lg:justify-center lg:px-0"}
+                          justify-start
                         `}
-                        title={!isHovered ? item.title : ""}
+                        title={item.title}
                       >
-                        {Icon && <Icon size={22} className={`shrink-0 ${isHovered ? "" : "lg:mx-auto"}`} />}
-                        <span
-                          className={`
-                            whitespace-nowrap transition-all duration-300
-                            ${isHovered ? "lg:opacity-100 lg:w-auto" : "lg:opacity-0 lg:w-0 lg:hidden"}
-                          `}
-                        >
+                        {Icon && <Icon size={22} className="shrink-0" />}
+                        <span className="whitespace-nowrap transition-all duration-300">
                           {item.title}
                         </span>
                       </Link>
@@ -106,9 +95,9 @@ export default function Sidebar() {
               text-sidebar-foreground
               hover:bg-destructive hover:text-sidebar-primary-foreground
               transition-colors duration-200
-              ${isHovered ? "" : "lg:justify-center lg:px-0"}
+              justify-start
             `}
-            title={!isHovered ? "Logout" : ""}
+            title="Logout"
           >
             {(() => {
               const logoutItem = sidebarLinks.find((l) => l.id === "logout");
@@ -116,19 +105,12 @@ export default function Sidebar() {
               const LogoutIcon = logoutItem.icon;
               return <LogoutIcon size={22} className="shrink-0" />;
             })()}
-            <span
-              className={`
-                whitespace-nowrap transition-all duration-300
-                ${isHovered ? "lg:opacity-100 lg:w-auto" : "lg:opacity-0 lg:w-0 lg:hidden"}
-              `}
-            >
-              Logout
-            </span>
+            <span className="whitespace-nowrap transition-all duration-300">Logout</span>
           </Link>
         </div>
       </aside>
 
-      {/* Mobile overlay */}
+      {/* MOBILE OVERLAY */}
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
