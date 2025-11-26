@@ -1,16 +1,14 @@
 "use client";
-
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
-import React from "react";
 
 interface DashboardStatCardProps {
   title: string;
   value: string | number;
-  icon?: typeof LucideIcon;
+  icon?: LucideIcon | string;
   trend?: string;
   trendType?: "up" | "down";
-  iconColor?: string; // optional color class for icon background
+  iconColor?: string;
 }
 
 export default function DashboardStatCard({
@@ -22,8 +20,10 @@ export default function DashboardStatCard({
   iconColor = "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300",
 }: DashboardStatCardProps) {
   return (
-    <Card className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900
-                     transition-transform transform hover:scale-[1.02] hover:shadow-lg duration-300 ease-in-out">
+    <Card
+      className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900
+                     transition-transform transform hover:scale-[1.02] hover:shadow-lg duration-300 ease-in-out"
+    >
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
           {title}
