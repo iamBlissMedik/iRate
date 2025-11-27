@@ -14,7 +14,8 @@ const handler = NextAuth({
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials) return null;
+        if (!credentials?.email || !credentials.password) return null;
+
         try {
           const request = {
             email: credentials.email.toLowerCase(),
@@ -22,28 +23,26 @@ const handler = NextAuth({
           };
 
           const res: ILoginResponse = await login(request);
-          if (!res) return null;
+          if (!res?.user || !res.accessToken) return null;
+
           const {
-            user: { email, id, role },
+            user: { id, email, role },
             accessToken,
           } = res;
-          const user: IAuthUser = {
-            id,
-            email,
-            accessToken,
-            role,
-          };
-          return user;
+
+          // Only allow ADMIN
+          if (role !== "ADMIN") {
+            // Throw error that will be caught on frontend
+            throw new Error("Only admins can log in");
+          }
+
+          const authUser: IAuthUser = { id, email, role, accessToken };
+          return authUser;
         } catch (err) {
           if (axios.isAxiosError(err)) {
-            throw new Error(
-              err.response?.data?.message || "An error occurred during login"
-            );
-          } else if (err instanceof Error) {
-            throw new Error(err.message || "An error occurred during login");
-          } else {
-            throw new Error("An error occurred during login");
+            throw new Error(err.response?.data?.message || "Login failed");
           }
+          throw new Error(err instanceof Error ? err.message : "Login failed");
         }
       },
     }),
