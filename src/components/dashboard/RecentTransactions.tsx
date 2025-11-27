@@ -1,34 +1,23 @@
 "use client";
 
-import TransactionRow from "../ui/MyTransactionRow";
+import { Transaction } from "@/types/transactionTypes";
+import { CheckCircle, XCircle, RefreshCw } from "lucide-react";
 
+export default function TransactionRow({ user, amount, type, status }: Transaction) {
+  const statusIcon = {
+    success: <CheckCircle className="text-green-600" size={18} />,
+    pending: <RefreshCw className="text-yellow-500 animate-spin" size={18} />,
+    failed: <XCircle className="text-red-600" size={18} />,
+  };
 
-const transactions = [
-  { user: "Alice", amount: 1200, type: "fund", status: "success" },
-  { user: "Bob", amount: 5000, type: "transfer", status: "pending" },
-  { user: "Charlie", amount: 800, type: "withdraw", status: "failed" },
-  { user: "Daisy", amount: 3000, type: "fund", status: "success" },
-];
-
-export default function RecentTransactions() {
   return (
-    <div className="bg-sidebar border border-sidebar-border rounded-xl p-6 shadow-sm overflow-x-auto">
-      <h2 className="text-lg font-semibold text-sidebar-foreground mb-4">Recent Transactions</h2>
-      <table className="min-w-full text-left border-collapse">
-        <thead>
-          <tr className="bg-gray-100 dark:bg-gray-800">
-            <th className="px-4 py-2 text-gray-600 dark:text-gray-300">User</th>
-            <th className="px-4 py-2 text-gray-600 dark:text-gray-300">Amount</th>
-            <th className="px-4 py-2 text-gray-600 dark:text-gray-300">Type</th>
-            <th className="px-4 py-2 text-gray-600 dark:text-gray-300">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {transactions.map((tx, index) => (
-            <TransactionRow key={index} {...tx} />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <tr className="border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+      <td className="px-4 py-3 text-gray-700 dark:text-gray-300">{user}</td>
+      <td className="px-4 py-3 text-gray-900 dark:text-white font-medium">₦{amount}</td>
+      <td className="px-4 py-3 capitalize">{type}</td>
+      <td className="px-4 py-3 flex items-center gap-2">
+        {statusIcon[status]} <span className="capitalize">{status}</span>
+      </td>
+    </tr>
   );
 }

@@ -41,4 +41,14 @@ export   const stats: IStat[] = [
     iconColor:
       "text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300",
   },
+  {
+    id: 5,
+    title: "Total Cashflow",
+    value: "+65.5%",
+    icon: Activity,
+    trend: "from last week",
+    trendType: "up",
+    iconColor:
+      "text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300",
+  },
 ];

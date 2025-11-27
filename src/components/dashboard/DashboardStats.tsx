@@ -1,6 +1,6 @@
 "use client";
 import { stats } from "@/constants/dummyData";
-import DashboardStatCard from "../ui/MyDashboardStatCard";
+import DashboardStatCard from "../ui/CustomDashboardStatCard";
 
 export default function DashboardStats() {
   return (
