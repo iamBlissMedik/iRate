@@ -33,8 +33,8 @@ export   const stats: IStat[] = [
   },
   {
     id: 4,
-    title: "Weekly Activity",
-    value: "+12.4%",
+    title: "Total Cashflow",
+    value: "+65.5%",
     icon: Activity,
     trend: "from last week",
     trendType: "up",
@@ -43,8 +43,8 @@ export   const stats: IStat[] = [
   },
   {
     id: 5,
-    title: "Total Cashflow",
-    value: "+65.5%",
+    title: "Transaction Vlumes",
+    value: "+85.5%",
     icon: Activity,
     trend: "from last week",
     trendType: "up",
