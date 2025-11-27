@@ -34,21 +34,21 @@ export   const stats: IStat[] = [
   {
     id: 4,
     title: "Total Cashflow",
-    value: "+65.5%",
+    value: "₦10,890,000",
     icon: Activity,
-    trend: "from last week",
-    trendType: "up",
+    trend: "-1.2%",
+    trendType: "down",
     iconColor:
       "text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300",
   },
   {
     id: 5,
     title: "Transaction Volumes",
-    value: "+85.5%",
+    value: "₦17,130,000",
     icon: BarChart3,
-    trend: "from last week",
+    trend: "+3.2%",
     trendType: "up",
     iconColor:
-      "text-orange-600 bg-orange-100 dark:bg-orange-900/40 dark:text-orange-300",
+      "text-teal-600 bg-teal-100 dark:bg-teal-900/40 dark:text-teal-300",
   },
 ];
