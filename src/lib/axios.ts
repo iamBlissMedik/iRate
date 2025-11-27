@@ -32,6 +32,7 @@ axiosInstance.interceptors.request.use(
     config: InternalAxiosRequestConfig
   ): Promise<InternalAxiosRequestConfig> => {
     const session = await getSession();
+    console.log("session", session);
     const token = session?.user.accessToken as string | undefined;
 
     if (token && config.headers) {

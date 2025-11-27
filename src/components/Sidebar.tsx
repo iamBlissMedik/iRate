@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { sidebarLinks } from "@/constants/navLinks";
+import { signOut } from "next-auth/react";
 
 export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -46,10 +47,11 @@ export default function Sidebar() {
             {/* Full logo (always centered) */}
             <div className="text-center transition-opacity duration-300">
               <h1 className="text-xl font-bold">IRATE</h1>
-              <p className="text-sidebar-accent-foreground text-sm mt-1">Admin Panel</p>
+              <p className="text-sidebar-accent-foreground text-sm mt-1">
+                Admin Panel
+              </p>
             </div>
           </div>
-
 
           {/* Navigation Links */}
           <nav className="mt-6 px-2">
@@ -66,9 +68,10 @@ export default function Sidebar() {
                         className={`
                           flex items-center gap-3 px-4 py-3 rounded-(--radius-md)
                           transition-colors duration-200
-                          ${isActive
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
-                            : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                          ${
+                            isActive
+                              ? "bg-sidebar-primary text-sidebar-primary-foreground shadow-md"
+                              : "hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                           }
                           justify-start
                         `}
@@ -88,8 +91,8 @@ export default function Sidebar() {
 
         {/* Logout at bottom */}
         <div className="border-t border-sidebar-border p-4">
-          <Link
-            href="/logout"
+          <div
+            onClick={() => signOut()}
             className={`
               flex items-center gap-3 px-4 py-3 rounded-(--radius-md)
               text-sidebar-foreground
@@ -105,8 +108,10 @@ export default function Sidebar() {
               const LogoutIcon = logoutItem.icon;
               return <LogoutIcon size={22} className="shrink-0" />;
             })()}
-            <span className="whitespace-nowrap transition-all duration-300">Logout</span>
-          </Link>
+            <span className="whitespace-nowrap transition-all duration-300">
+              Logout
+            </span>
+          </div>
         </div>
       </aside>
 
