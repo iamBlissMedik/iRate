@@ -1,5 +1,5 @@
 import { IStat } from "@/types/dashboardTypes";
-import { Wallet, Users, Banknote, Activity } from "lucide-react";
+import { Wallet, Users, Banknote, Activity, BarChart3 } from "lucide-react";
 export   const stats: IStat[] = [
   {
     id: 1,
@@ -43,9 +43,9 @@ export   const stats: IStat[] = [
   },
   {
     id: 5,
-    title: "Transaction Vlumes",
+    title: "Transaction Volumes",
     value: "+85.5%",
-    icon: Activity,
+    icon: BarChart3,
     trend: "from last week",
     trendType: "up",
     iconColor:
