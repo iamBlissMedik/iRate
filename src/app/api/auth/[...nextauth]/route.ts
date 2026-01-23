@@ -1,8 +1,8 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import axios from "axios";
-import { IAuthUser, ILoginResponse } from "@/types/auth.types";
-import { login } from "@/services/auth.api";
+import { IAuthUser, ILoginResponse } from "@/features/auth/types/auth.types";
+import { login } from "@/features/auth/services/auth.api";
 
 const handler = NextAuth({
   providers: [
