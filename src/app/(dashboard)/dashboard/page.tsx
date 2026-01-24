@@ -1,6 +1,6 @@
 "use client";
 
-import DashboardStats from "@/components/dashboard/DashboardStats";
+import { DashboardStats } from "@/features/dashboard";
 
 export default function DashboardPage() {
   return (
