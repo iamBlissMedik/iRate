@@ -2,7 +2,7 @@
  * Unit tests for Mock API Provider
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { MockDashboardApiProvider } from '../api/mockApiProvider';
 
 describe('MockDashboardApiProvider', () => {

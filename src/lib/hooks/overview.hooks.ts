@@ -35,17 +35,26 @@ export const useDashboardOverview = (
   });
 
   // Handle callbacks separately to avoid type conflicts
-  React.useEffect(() => {
-    if (result.isError && result.error && onError) {
-      onError(result.error);
-    }
-  }, [result.isError, result.error, onError]);
+  // Use refs to avoid re-running effects when callbacks change
+  const onErrorRef = React.useRef(onError);
+  const onSuccessRef = React.useRef(onSuccess);
 
   React.useEffect(() => {
-    if (result.isSuccess && result.data && onSuccess) {
-      onSuccess(result.data);
+    onErrorRef.current = onError;
+    onSuccessRef.current = onSuccess;
+  }, [onError, onSuccess]);
+
+  React.useEffect(() => {
+    if (result.isError && result.error && onErrorRef.current) {
+      onErrorRef.current(result.error);
     }
-  }, [result.isSuccess, result.data, onSuccess]);
+  }, [result.isError, result.error]);
+
+  React.useEffect(() => {
+    if (result.isSuccess && result.data && onSuccessRef.current) {
+      onSuccessRef.current(result.data);
+    }
+  }, [result.isSuccess, result.data]);
 
   return result;
 };

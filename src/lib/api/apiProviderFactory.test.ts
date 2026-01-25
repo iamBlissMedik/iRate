@@ -6,7 +6,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ApiProviderFactory } from '../api/apiProviderFactory';
 import { MockDashboardApiProvider } from '../api/mockApiProvider';
 import { RealDashboardApiProvider } from '../api/realApiProvider';
-import { setApiConfig, getApiConfig } from '../config/apiConfig';
+import { setApiConfig } from '../config/apiConfig';
 
 describe('ApiProviderFactory', () => {
   beforeEach(() => {
@@ -43,6 +43,7 @@ describe('ApiProviderFactory', () => {
   });
 
   it('should fall back to mock for unknown modes', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setApiConfig({ mode: 'invalid' as any });
     
     const provider = ApiProviderFactory.getDashboardApiProvider();
