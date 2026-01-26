@@ -121,6 +121,9 @@ export const queryKeys = {
     users: (filters?: Record<string, unknown>) =>
       [...queryKeys.admin.all, "users", filters] as const,
     stats: () => [...queryKeys.admin.all, "stats"] as const,
+    dashboard: {
+      overview: () => ["dashboard", "overview"],
+    },
   },
 } as const;
 

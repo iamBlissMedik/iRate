@@ -7,7 +7,7 @@ import {
 } from "@/shared/components/ui/card";
 import { LucideIcon } from "lucide-react";
 
-interface DashboardStatCardProps {
+export interface DashboardStatCardProps {
   title: string;
   value: string | number;
   icon?: LucideIcon | string;
@@ -27,7 +27,7 @@ export default function DashboardStatCard({
   return (
     <Card
       className="rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm bg-white dark:bg-gray-900
-                     transition-transform transform hover:scale-[1.02] hover:shadow-lg duration-300 ease-in-out"
+      transition-transform transform hover:scale-[1.02] hover:shadow-lg duration-300 ease-in-out"
     >
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
