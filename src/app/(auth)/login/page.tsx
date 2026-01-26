@@ -1,5 +1,4 @@
-
-import LoginForm from "@/components/forms/LoginForm";
+import { LoginForm } from "@/features/auth";
 import { connection } from "next/server";
 
 export default async function LoginPage() {
