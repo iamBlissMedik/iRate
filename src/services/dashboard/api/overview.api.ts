@@ -8,21 +8,18 @@ export interface IDashboardOverviewResponse {
   transactionVolume: number;
 }
 
-const USE_MOCK = true; 
+export interface IDashboardChartPoint {
+  date: string; // ISO
+  cashflow: number;
+  volume: number;
+}
+
 
 export const getDashboardOverview = async () => {
-  if (USE_MOCK) {
-    return Promise.resolve({
-      totalWalletBalance: 12450000,
-      totalUsers: 8432,
-      totalTransactions: 152340,
-      totalCashflow: 10890000,
-      transactionVolume: 17130000,
-    });
-  }
-
   const response = await axios.get<IDashboardOverviewResponse>(
-    "/dashboard/overview"
+    "/admin/dashboard/overview"
   );
   return response.data;
 };
+
+
