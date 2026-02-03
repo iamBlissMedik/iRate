@@ -1,4 +1,4 @@
-import { IDashboardOverviewResponse } from "@/services/dashboard/api/overview.api";
+import { IDashboardOverviewResponse } from "@/features/dashboard/api/overview.api";
 import { formatNairaCompact } from "@/shared/utils/currency.utils";
 
 export interface DashboardStatItem {

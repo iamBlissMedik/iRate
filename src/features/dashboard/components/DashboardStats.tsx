@@ -2,7 +2,7 @@
 
 import DashboardStatCard from "@/shared/components/ui/CustomDashboardStatCard";
 import { mapOverviewToStats } from "../services/dashboardStats.mapper";
-import { useDashboardOverview } from "@/services/dashboard/hooks/overview.hooks";
+import { useDashboardOverview } from "@/features/dashboard/hooks/overview.hooks";
 import StatSkeleton from "@/shared/components/ui/CustomStatSkeleton";
 
 export default function DashboardStats() {
