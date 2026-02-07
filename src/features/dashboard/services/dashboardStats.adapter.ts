@@ -7,7 +7,7 @@ export interface DashboardStatItem {
   value: string | number;
 }
 
-export const mapOverviewToStats = (
+export const adaptOverviewToDashboardStats = (
   data: IDashboardOverviewResponse,
 ): DashboardStatItem[] => {
   return [

@@ -1,9 +1,9 @@
 "use client";
 
 import DashboardStatCard from "@/shared/components/ui/CustomDashboardStatCard";
-import { mapOverviewToStats } from "../services/dashboardStats.mapper";
 import { useDashboardOverview } from "@/features/dashboard/hooks/overview.hooks";
 import StatSkeleton from "@/shared/components/ui/CustomStatSkeleton";
+import { adaptOverviewToDashboardStats } from "../services/dashboardStats.adapter";
 
 export default function DashboardStats() {
   const { data, isLoading, isError } = useDashboardOverview();
@@ -26,7 +26,7 @@ export default function DashboardStats() {
     );
   }
 
-  const stats = mapOverviewToStats(data);
+  const stats = adaptOverviewToDashboardStats(data);
 
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-6">
