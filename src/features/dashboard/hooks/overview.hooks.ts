@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
-import { getDashboardOverview } from "../api/overview.api";
+import { getDashboardOverview } from "../services/shared/api/overview.api";
 import { handleAxiosError } from "@/lib/errors/handleAxiosError";
 import { queryKeys } from "@/core/query/query-client";
 
