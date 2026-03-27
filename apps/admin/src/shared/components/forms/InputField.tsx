@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { Label } from "@/shared/components/ui/label";
 import { Input } from "@/shared/components/ui/input";
 import type {
@@ -39,11 +39,25 @@ export default function InputField<T extends FieldValues>({
 }: InputFieldProps<T>) {
   const [showPassword, setShowPassword] = useState(false);
 
-  const message =
-    typeof error === "string" ? error : (error?.message as string | undefined);
+  // Memoize toggle function
+  const togglePassword = useCallback(() => {
+    setShowPassword((prev) => !prev);
+  }, []);
 
-  // Toggle between "text" and "password"
-  const inputType = type === "password" && showPassword ? "text" : type;
+  // Memoize error message
+  const message = useMemo(
+    () =>
+      typeof error === "string"
+        ? error
+        : (error?.message as string | undefined),
+    [error],
+  );
+
+  // Memoize input type
+  const inputType = useMemo(
+    () => (type === "password" && showPassword ? "text" : type),
+    [type, showPassword],
+  );
 
   return (
     <div className="space-y-1 w-full text-left ">
@@ -80,7 +94,7 @@ export default function InputField<T extends FieldValues>({
         {type === "password" && (
           <button
             type="button"
-            onClick={() => setShowPassword((prev) => !prev)}
+            onClick={togglePassword}
             className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary focus:outline-none cursor-pointer"
           >
             {showPassword ? (

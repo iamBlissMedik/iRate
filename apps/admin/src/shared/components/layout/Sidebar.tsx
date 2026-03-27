@@ -1,22 +1,47 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { sidebarLinks } from "@/constants/navLinks";
 import { signOut } from "next-auth/react";
 
-export default function Sidebar() {
+function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
+
+  // Memoize navigation links (exclude logout)
+  const navLinks = useMemo(
+    () => sidebarLinks.filter((link) => link.id !== "logout"),
+    [],
+  );
+
+  // Memoize logout link
+  const logoutLink = useMemo(
+    () => sidebarLinks.find((l) => l.id === "logout"),
+    [],
+  );
+
+  // Memoize callbacks
+  const toggleMobile = useCallback(() => {
+    setIsMobileOpen((prev) => !prev);
+  }, []);
+
+  const closeMobile = useCallback(() => {
+    setIsMobileOpen(false);
+  }, []);
+
+  const handleSignOut = useCallback(() => {
+    signOut();
+  }, []);
 
   return (
     <>
       {/* Mobile Toggle Button */}
       <button
         className="fixed top-4 left-4 z-50 p-2 bg-sidebar-primary text-sidebar-primary-foreground rounded-(--radius-md) shadow-md lg:hidden hover:bg-sidebar-accent transition-colors duration-200"
-        onClick={() => setIsMobileOpen(!isMobileOpen)}
+        onClick={toggleMobile}
         aria-label="Toggle menu"
       >
         {isMobileOpen ? <X size={24} /> : <Menu size={24} />}
@@ -56,9 +81,7 @@ export default function Sidebar() {
           {/* Navigation Links */}
           <nav className="mt-6 px-2">
             <ul className="space-y-2">
-              {sidebarLinks
-                .filter((link) => link.id !== "logout") // skip logout for bottom section
-                .map((item) => {
+              {navLinks.map((item) => {
                   const isActive = pathname === item.url;
                   const Icon = item.icon;
                   return (
@@ -92,22 +115,20 @@ export default function Sidebar() {
         {/* Logout at bottom */}
         <div className="border-t border-sidebar-border p-4">
           <div
-            onClick={() => signOut()}
+            onClick={handleSignOut}
             className={`
               flex items-center gap-3 px-4 py-3 rounded-(--radius-md)
               text-sidebar-foreground
               hover:bg-destructive hover:text-sidebar-primary-foreground
               transition-colors duration-200
               justify-start
+              cursor-pointer
             `}
             title="Logout"
           >
-            {(() => {
-              const logoutItem = sidebarLinks.find((l) => l.id === "logout");
-              if (!logoutItem || !logoutItem.icon) return null;
-              const LogoutIcon = logoutItem.icon;
-              return <LogoutIcon size={22} className="shrink-0" />;
-            })()}
+            {logoutLink?.icon && (
+              <logoutLink.icon size={22} className="shrink-0" />
+            )}
             <span className="whitespace-nowrap transition-all duration-300">
               Logout
             </span>
@@ -119,9 +140,11 @@ export default function Sidebar() {
       {isMobileOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
+          onClick={closeMobile}
         />
       )}
     </>
   );
 }
+
+export default memo(Sidebar);

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Image, { StaticImageData } from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 
@@ -10,13 +11,13 @@ interface CustomStatCardProps {
   description: string;
   valueColor?: string;
 }
-const CustomStatCard = ({
+function CustomStatCard({
   title,
   icon,
   value,
   description,
   valueColor = "#CA0956",
-}: CustomStatCardProps) => {
+}: CustomStatCardProps) {
   return (
     <Card>
       <CardHeader>
@@ -44,6 +45,6 @@ const CustomStatCard = ({
       </CardContent>
     </Card>
   );
-};
+}
 
-export default CustomStatCard;
+export default memo(CustomStatCard);

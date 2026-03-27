@@ -1,5 +1,6 @@
 "use client";
 
+import { memo, useMemo } from "react";
 import { Button } from "@/shared/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -12,16 +13,21 @@ interface PaginationProps {
   label?: string;
 }
 
-const CustomPagination = ({
+function CustomPagination({
   currentPage,
   totalPages,
   onPageChange,
   pageSize,
   totalItems,
   label = "activities",
-}: PaginationProps) => {
-  const startIndex = (currentPage - 1) * pageSize + 1;
-  const endIndex = Math.min(currentPage * pageSize, totalItems);
+}: PaginationProps) {
+  // Memoize computed values
+  const { startIndex, endIndex } = useMemo(() => {
+    const start = (currentPage - 1) * pageSize + 1;
+    const end = Math.min(currentPage * pageSize, totalItems);
+    return { startIndex: start, endIndex: end };
+  }, [currentPage, pageSize, totalItems]);
+
   return (
     <div className="flex justify-between items-center w-full">
       <div className="text-secondary text-sm">
@@ -54,5 +60,6 @@ const CustomPagination = ({
       </div>
     </div>
   );
-};
-export default CustomPagination;
+}
+
+export default memo(CustomPagination);

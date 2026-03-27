@@ -1,4 +1,5 @@
 "use client";
+import { memo } from "react";
 import {
   Card,
   CardHeader,
@@ -16,7 +17,7 @@ export interface DashboardStatCardProps {
   iconColor?: string;
 }
 
-export default function DashboardStatCard({
+function DashboardStatCard({
   title,
   value,
   icon: Icon,
@@ -63,3 +64,5 @@ export default function DashboardStatCard({
     </Card>
   );
 }
+
+export default memo(DashboardStatCard);

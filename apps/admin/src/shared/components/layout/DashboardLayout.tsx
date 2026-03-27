@@ -1,10 +1,10 @@
 "use client";
 import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
-import { useEffect } from "react";
+import { useEffect, memo } from "react";
 import { useSession } from "next-auth/react";
 
-const DashboardLayoutClient = ({ children }: { children: React.ReactNode }) => {
+function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
   const { status } = useSession();
   const router = useRouter();
 
@@ -23,6 +23,6 @@ const DashboardLayoutClient = ({ children }: { children: React.ReactNode }) => {
       </main>
     </div>
   );
-};
+}
 
-export default DashboardLayoutClient;
+export default memo(DashboardLayoutClient);

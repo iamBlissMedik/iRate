@@ -6,6 +6,7 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { useAppSelector, useAppDispatch } from "@/core/store/hooks";
 import { logout as logoutAction } from "../store/auth.slice";
 import { authApi } from "../services/api/auth.api";
@@ -37,7 +38,7 @@ export const useAuth = () => {
   /**
    * Logout user
    */
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await authApi.logout();
     } catch (error) {
@@ -48,24 +49,27 @@ export const useAuth = () => {
       dispatch(logoutAction());
       router.push("/login");
     }
-  };
+  }, [dispatch, router]);
 
   /**
    * Check if user has specific role
    */
-  const hasRole = (role: string | string[]): boolean => {
-    if (!user) return false;
+  const hasRole = useCallback(
+    (role: string | string[]): boolean => {
+      if (!user) return false;
 
-    const roles = Array.isArray(role) ? role : [role];
-    return roles.includes(user.role);
-  };
+      const roles = Array.isArray(role) ? role : [role];
+      return roles.includes(user.role);
+    },
+    [user],
+  );
 
   /**
    * Check if user is admin
    */
-  const isAdmin = (): boolean => {
+  const isAdmin = useCallback((): boolean => {
     return hasRole(["ADMIN", "SUPER_ADMIN"]);
-  };
+  }, [hasRole]);
 
   return {
     user: user || currentUser,
