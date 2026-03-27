@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 9000",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "dev": "npm run dev --prefix apps/admin",
+    "dev:admin": "npm run dev --prefix apps/admin",
+    "dev:web": "npm run dev --prefix apps/web",
+    "build": "npm run build --prefix apps/admin",
+    "build:admin": "npm run build --prefix apps/admin",
+    "build:web": "npm run build --prefix apps/web",
+    "start": "npm run start --prefix apps/admin",
+    "start:admin": "npm run start --prefix apps/admin",
+    "start:web": "npm run start --prefix apps/web",
+    "lint": "eslint apps/"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
