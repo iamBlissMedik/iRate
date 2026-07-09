@@ -6,7 +6,13 @@
     "IRATE_API_BASE_URL",
     "AUTH_COOKIE_SECRET",
     "NEXT_PUBLIC_APP_NAME",
-    "NEXT_PUBLIC_APP_URL"
+    "NEXT_PUBLIC_APP_URL",
+    "DATABASE_URL",
+    "REDIS_URL",
+    "JWT_SECRET",
+    "JWT_REFRESH_SECRET",
+    "PORT",
+    "LOG_LEVEL"
   ],
   "tasks": {
     "build": {

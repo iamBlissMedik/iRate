@@ -1,0 +1,54 @@
+import { Request, Response } from "express";
+import { UserService } from "./user.service";
+import { sendResponse } from "@core/utils/response";
+import { AppError } from "@core/errors/AppError";
+
+const userService = new UserService();
+export class UserController {
+  async getAllUsers(req: Request, res: Response) {
+    // Forward pagination + search so the admin list paginates server-side.
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const search = (req.query.search as string)?.trim() || undefined;
+
+    const data = await userService.getAllUsers(page, limit, search);
+    sendResponse(res, 200, true, "Users retrieved successfully", data);
+  }
+
+  async getUser(req: Request, res: Response) {
+    // If /me, use authenticated user ID
+    const userId = (req.params.userId as string) || req.user?.id;
+    if (!userId) throw new AppError("Unauthorized", 401);
+
+    // 🔒 A user may only view their own profile; admins may view anyone.
+    if (userId !== req.user.id && req.user.role !== "ADMIN") {
+      throw new AppError("Forbidden: you can only view your own profile", 403);
+    }
+
+    // Pagination query params (optional)
+    const walletPage = parseInt(req.query.walletPage as string) || 1;
+    const walletLimit = parseInt(req.query.walletLimit as string) || 10;
+    const txPage = parseInt(req.query.txPage as string) || 1;
+    const txLimit = parseInt(req.query.txLimit as string) || 5;
+
+    const user = await userService.getUser(
+      userId,
+      walletPage,
+      walletLimit,
+      txPage,
+      txLimit
+    );
+    sendResponse(res, 200, true, "User fetched successfully", user);
+  }
+
+  async getAllUsersStats(req: Request, res: Response) {
+    const stats = await userService.getAllUsersStats();
+    sendResponse(res, 200, true, "User stats fetched successfully", stats);
+  }
+
+  // ✅ The logged-in user's dashboard/home overview.
+  async getMyOverview(req: Request, res: Response) {
+    const overview = await userService.getMyOverview(req.user.id);
+    sendResponse(res, 200, true, "Overview fetched successfully", overview);
+  }
+}

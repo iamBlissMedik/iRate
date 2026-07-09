@@ -68,5 +68,32 @@ function StaggerItem({ children, className }: { children: ReactNode; className?:
 
 Stagger.Item = StaggerItem;
 
+/**
+ * Smoothly re-animates its content whenever `routeKey` changes — pass the
+ * current pathname to get a fade/rise transition on every navigation. Kept
+ * framework-agnostic (no next/navigation) so the app supplies the key.
+ */
+export function PageTransition({
+  routeKey,
+  children,
+  className,
+}: {
+  routeKey: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <motion.div
+      key={routeKey}
+      className={className}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={transitions.smooth}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 /** A number that animates from 0 → value (used for headline figures). */
 export { AnimatedNumber } from "./animated-number";

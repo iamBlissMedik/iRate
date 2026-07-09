@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@irate/ui";
+import { PageTransition } from "@irate/ui/motion";
 import { useLogout, useSession } from "@irate/api-client/react";
 import type { ReactNode } from "react";
 
@@ -88,7 +89,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         </header>
 
         <main className="mx-auto w-full max-w-5xl flex-1 px-4 pb-24 pt-6 lg:px-8 lg:pb-10">
-          {children}
+          <PageTransition routeKey={pathname}>{children}</PageTransition>
         </main>
       </div>
 
