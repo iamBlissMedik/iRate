@@ -1,57 +1,58 @@
 "use client";
 
 import { memo } from "react";
-import { Button } from "@/shared/components/ui/button";
-import { InputField, CheckboxField } from "@/shared/components/forms";
-import { ThemeToggle } from "@/shared/components/layout";
+import { Button, Input, Label, Logo, ThemeToggle } from "@irate/ui";
 import { useLoginForm } from "../hooks/useLoginForm";
 
 /**
- * LoginForm Component (Optimized)
- *
- * Follows SOLID Principles:
- * - Single Responsibility: Only renders UI, delegates logic to useLoginForm
- * - Open/Closed: Extensible through props without modifying core
- * - Dependency Inversion: Depends on useLoginForm abstraction
- *
- * Optimizations:
- * - memo: Prevents unnecessary re-renders (no props, but good practice)
- * - Form fields are already optimized with controlled inputs
+ * Admin login form. UI comes from the shared design system (@irate/ui); all
+ * logic lives in useLoginForm (BFF login, ADMIN-gated).
  */
 const LoginForm = () => {
-  const { register, errors, isSubmitting, isValid, control, handleLogin } =
-    useLoginForm();
+  const { register, errors, isSubmitting, handleLogin } = useLoginForm();
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-[#26021e]">
-      <div className="w-full max-w-md space-y-4 border text-center rounded pt-7 pb-14 px-9 bg-background">
-        <ThemeToggle />
-        <div className="flex justify-center"></div>
-        <h1 className="text-2xl font-semibold text-foreground">Admin Login</h1>
-        <form className="space-y-6" onSubmit={handleLogin}>
-          <InputField
-            id="email"
-            label="Email"
-            register={register}
-            error={errors.email}
-            placeholder="Enter your email"
-          />
-          <InputField
-            id="password"
-            label="Password"
-            type="password"
-            register={register}
-            error={errors.password}
-            placeholder="Enter your password"
-          />
-          <CheckboxField id="remember" label="Remember me" control={control} />
-          <Button
-            type="submit"
-            className="w-full rounded-xl  h-12 text-white bg-secondary-2"
-            loading={isSubmitting}
-            disabled={!isValid}
-          >
-            {isSubmitting ? "Logging in..." : "Login"}
+    <div className="flex min-h-screen items-center justify-center bg-muted p-4">
+      <div className="w-full max-w-md space-y-6 rounded-xl border border-border bg-card p-8 shadow-sm">
+        <div className="flex items-center justify-between">
+          <Logo />
+          <ThemeToggle />
+        </div>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-semibold tracking-tight">Admin sign in</h1>
+          <p className="text-sm text-muted-foreground">Restricted to administrators.</p>
+        </div>
+        <form className="space-y-4" onSubmit={handleLogin} noValidate>
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="admin@irate.dev"
+              error={Boolean(errors.email)}
+              {...register("email")}
+            />
+            {errors.email ? (
+              <p className="text-xs text-destructive">{errors.email.message}</p>
+            ) : null}
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="••••••••"
+              error={Boolean(errors.password)}
+              {...register("password")}
+            />
+            {errors.password ? (
+              <p className="text-xs text-destructive">{errors.password.message}</p>
+            ) : null}
+          </div>
+          <Button type="submit" className="w-full" loading={isSubmitting}>
+            Sign in
           </Button>
         </form>
       </div>

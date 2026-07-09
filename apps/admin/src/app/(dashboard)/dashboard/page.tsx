@@ -1,24 +1,27 @@
 "use client";
 
-import { DashboardStats } from "@/features/dashboard";
+import { DashboardStats, CashflowChart } from "@/features/dashboard";
+import { FadeIn } from "@irate/ui/motion";
 
 export default function DashboardPage() {
   return (
     <div className="space-y-6 p-6 lg:p-10">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-primary dark:text-white">
-          Welcome back, User
-        </h1>
-        <h1 className="text-2xl font-semibold text-primary dark:text-white">
-          Dashboard
-        </h1>
-        <p className="text-sm text-muted-foreground dark:text-gray-300 mt-1">
-          Overview of system performance and activities
-        </p>
-      </div>
+      <FadeIn>
+        <div className="mb-2">
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Overview of system performance and activity
+          </p>
+        </div>
+      </FadeIn>
 
-      {/* Top Stat Cards */}
+      {/* Top stat cards (staggered) */}
       <DashboardStats />
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <CashflowChart />
+      </div>
     </div>
   );
 }

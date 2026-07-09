@@ -1,27 +1,24 @@
 /**
  * useLoginForm Hook
  *
- * Handles login form state and submission logic
- * Follows Single Responsibility Principle - only manages form logic
+ * Manages login form state and submission. Auth now goes through the BFF
+ * (`/api/auth/login`, ADMIN-gated) — no NextAuth, no client-side tokens.
  */
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
-import toast from "react-hot-toast";
+import { useLogin } from "@irate/api-client/react";
+import { ApiError, getErrorMessage } from "@irate/api-client";
+import { toast } from "@irate/ui";
 import { signInSchema } from "@/lib/validators/authSchemas";
-import { handleAxiosError } from "@/lib/errors/handleAxiosError";
 import type { ILoginFormData } from "@/types/formTypes";
 
-/**
- * Custom hook for login form management
- * Separates form logic from UI rendering (Single Responsibility)
- */
 export const useLoginForm = () => {
   const router = useRouter();
   const search = useSearchParams();
-  const callbackUrl = search.get("callbackUrl") ?? "/dashboard";
+  const callbackUrl = search.get("from") ?? search.get("callbackUrl") ?? "/dashboard";
+  const login = useLogin();
 
   const {
     register,
@@ -31,79 +28,30 @@ export const useLoginForm = () => {
   } = useForm<ILoginFormData>({
     resolver: zodResolver(signInSchema),
     mode: "onChange",
-    defaultValues: {
-      email: "",
-      password: "",
-      remember: false,
-    },
+    defaultValues: { email: "", password: "", remember: false },
   });
 
-  /**
-   * Authenticates user using NextAuth
-   * Follows Dependency Inversion - depends on signIn abstraction
-   */
-  const authenticateUser = async (credentials: ILoginFormData) => {
-    const response = await signIn("credentials", {
-      ...credentials,
-      redirect: false,
-      callbackUrl,
-    });
-
-    if (response?.error) {
-      throw new Error(response.error);
-    }
-
-    return response;
-  };
-
-  /**
-   * Handles successful authentication
-   * Follows Single Responsibility - only handles success case
-   */
-  const handleSuccess = () => {
-    toast.success("Login successful!");
-    router.push(callbackUrl);
-  };
-
-  /**
-   * Handles authentication errors
-   * Follows Single Responsibility - only handles error case
-   */
-  const handleError = (error: unknown) => {
-    console.error("Login failed:", error);
-
-    if (error instanceof Error) {
-      toast.error(error.message);
-    } else {
-      handleAxiosError(error);
-    }
-  };
-
-  /**
-   * Main form submission handler
-   * Orchestrates authentication flow
-   */
   const onSubmit = async (data: ILoginFormData) => {
     try {
-      const response = await authenticateUser(data);
-
-      if (response?.ok) {
-        handleSuccess();
-      }
+      await login.mutateAsync({ email: data.email, password: data.password });
+      toast.success("Login successful");
+      router.replace(callbackUrl);
+      router.refresh();
     } catch (error) {
-      handleError(error);
+      // 403 = authenticated but not an ADMIN.
+      const message =
+        error instanceof ApiError && error.isForbidden
+          ? "This account is not an admin."
+          : getErrorMessage(error, "Login failed. Please try again.");
+      toast.error(message);
     }
   };
 
-  /**
-   * Returns form props and handlers
-   * Clean interface for the component (Interface Segregation)
-   */
   return {
     register,
     control,
     errors,
-    isSubmitting,
+    isSubmitting: isSubmitting || login.isPending,
     isValid,
     handleLogin: handleSubmit(onSubmit),
   };

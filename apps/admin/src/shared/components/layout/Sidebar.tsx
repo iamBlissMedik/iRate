@@ -2,14 +2,17 @@
 
 import { useState, useMemo, useCallback, memo } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Menu, X } from "lucide-react";
 import { sidebarLinks } from "@/constants/navLinks";
-import { signOut } from "next-auth/react";
+import { useLogout } from "@irate/api-client/react";
+import { toast, ThemeToggle } from "@irate/ui";
 
 function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const logout = useLogout();
 
   // Memoize navigation links (exclude logout)
   const navLinks = useMemo(
@@ -32,9 +35,12 @@ function Sidebar() {
     setIsMobileOpen(false);
   }, []);
 
-  const handleSignOut = useCallback(() => {
-    signOut();
-  }, []);
+  const handleSignOut = useCallback(async () => {
+    await logout.mutateAsync();
+    toast.success("Signed out");
+    router.replace("/login");
+    router.refresh();
+  }, [logout, router]);
 
   return (
     <>
@@ -82,13 +88,13 @@ function Sidebar() {
           <nav className="mt-6 px-2">
             <ul className="space-y-2">
               {navLinks.map((item) => {
-                  const isActive = pathname === item.url;
-                  const Icon = item.icon;
-                  return (
-                    <li key={item.id}>
-                      <Link
-                        href={item.url}
-                        className={`
+                const isActive = pathname === item.url;
+                const Icon = item.icon;
+                return (
+                  <li key={item.id}>
+                    <Link
+                      href={item.url}
+                      className={`
                           flex items-center gap-3 px-4 py-3 rounded-(--radius-md)
                           transition-colors duration-200
                           ${
@@ -98,22 +104,26 @@ function Sidebar() {
                           }
                           justify-start
                         `}
-                        title={item.title}
-                      >
-                        {Icon && <Icon size={22} className="shrink-0" />}
-                        <span className="whitespace-nowrap transition-all duration-300">
-                          {item.title}
-                        </span>
-                      </Link>
-                    </li>
-                  );
-                })}
+                      title={item.title}
+                    >
+                      {Icon && <Icon size={22} className="shrink-0" />}
+                      <span className="whitespace-nowrap transition-all duration-300">
+                        {item.title}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </nav>
         </div>
 
-        {/* Logout at bottom */}
-        <div className="border-t border-sidebar-border p-4">
+        {/* Theme toggle + logout at bottom */}
+        <div className="space-y-2 border-t border-sidebar-border p-4">
+          <div className="flex items-center justify-between px-1">
+            <span className="text-sm text-muted-foreground">Theme</span>
+            <ThemeToggle />
+          </div>
           <div
             onClick={handleSignOut}
             className={`

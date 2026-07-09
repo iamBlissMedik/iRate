@@ -6,5 +6,6 @@
 
 export { default as DashboardLayout } from "./DashboardLayout";
 export { default as Sidebar } from "./Sidebar";
-export { ThemeToggle } from "./ThemeToggleButton";
+// Use the shared design-system toggle (was a bespoke duplicate).
+export { ThemeToggle } from "@irate/ui";
 export { default as Loader } from "./Loader";

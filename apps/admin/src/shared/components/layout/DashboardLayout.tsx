@@ -2,19 +2,22 @@
 import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
 import { useEffect, memo } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@irate/api-client/react";
 
 function DashboardLayoutClient({ children }: { children: React.ReactNode }) {
-  const { status } = useSession();
+  // Session comes from the BFF (httpOnly cookie) — no NextAuth.
+  const { data, isLoading } = useSession();
   const router = useRouter();
 
+  const authenticated = data?.authenticated ?? false;
+
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (!isLoading && !authenticated) {
       router.push("/login");
     }
-  }, [status, router]);
+  }, [isLoading, authenticated, router]);
 
-  if (status === "loading") return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
   return (
     <div className="flex h-screen mx-auto max-w-full  ">
       <Sidebar />

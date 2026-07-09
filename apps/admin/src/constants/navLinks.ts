@@ -1,13 +1,5 @@
 // /constants/navLinks.ts
-import {
-  LayoutDashboard,
-  Users,
-  Receipt,
-  BarChart3,
-  Settings,
-  LifeBuoy,
-  LogOut,
-} from "lucide-react";
+import { LayoutDashboard, Users, ShieldCheck, Wallet, LogOut } from "lucide-react";
 
 export const sidebarLinks = [
   {
@@ -19,32 +11,20 @@ export const sidebarLinks = [
   {
     id: "users",
     title: "Users",
-    url: "#",
+    url: "/dashboard/users",
     icon: Users,
   },
   {
-    id: "transactions",
-    title: "Transactions",
-    url: "#",
-    icon: Receipt,
+    id: "kyc",
+    title: "KYC",
+    url: "/dashboard/kyc",
+    icon: ShieldCheck,
   },
   {
-    id: "analytics",
-    title: "Analytics",
-    url: "#",
-    icon: BarChart3,
-  },
-  {
-    id: "settings",
-    title: "Settings",
-    url: "#",
-    icon: Settings,
-  },
-  {
-    id: "support",
-    title: "Support",
-    url: "#",
-    icon: LifeBuoy,
+    id: "wallets",
+    title: "Wallets",
+    url: "/dashboard/wallets",
+    icon: Wallet,
   },
   {
     id: "logout",

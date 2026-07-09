@@ -1,13 +1,9 @@
 /**
- * Admin Components
- *
- * Export all admin-specific components
- *
- * @example
- * import { UserManagement } from '@/features/admin/components';
+ * Admin Components — built on the shared @irate/api-client hooks + @irate/ui.
  */
-
-// Add admin components here as they are created
-// export { default as UserManagement } from './UserManagement';
-// export { default as AdminDashboard } from './AdminDashboard';
-export {};
+export { UsersTable } from "./UsersTable";
+export { KycTable } from "./KycTable";
+export { KycDistribution } from "./KycDistribution";
+export { WalletsOverview } from "./WalletsOverview";
+export { CreditWalletDialog } from "./CreditWalletDialog";
+export { KycStatusBadge } from "./KycStatusBadge";
