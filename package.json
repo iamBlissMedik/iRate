@@ -1,8 +1,8 @@
 {
-  "name": "irate-web-apps",
+  "name": "irate",
   "version": "0.1.0",
   "private": true,
-  "description": "iRate fintech monorepo — admin & user web apps with shared packages.",
+  "description": "iRate — full-stack fintech monorepo (user + admin apps, API, shared packages).",
   "workspaces": [
     "apps/*",
     "packages/*"

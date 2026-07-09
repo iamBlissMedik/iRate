@@ -41,10 +41,11 @@ contract, one API client, and one design system.
 ## Monorepo structure
 
 ```
-irate-web-apps/
+iRate/
 ├── apps/
 │   ├── user/        # Customer wallet (port 3000)
-│   └── admin/       # Admin dashboard (port 9000)
+│   ├── admin/       # Admin dashboard (port 9000)
+│   └── api/         # Express + Prisma + Redis backend (port 8000)
 ├── packages/
 │   ├── contracts/   # @irate/contracts  — Zod schemas + inferred types (the API contract)
 │   ├── api-client/  # @irate/api-client — typed client + React Query hooks
