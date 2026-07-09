@@ -1,8 +1,7 @@
 {
   "extends": "@irate/tsconfig/react-library.json",
   "compilerOptions": {
-    "noEmit": true,
-    "baseUrl": "."
+    "noEmit": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["node_modules"]

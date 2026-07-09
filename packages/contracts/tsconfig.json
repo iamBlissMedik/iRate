@@ -2,8 +2,7 @@
   "extends": "@irate/tsconfig/base.json",
   "compilerOptions": {
     "lib": ["ES2022", "DOM"],
-    "noEmit": true,
-    "baseUrl": "."
+    "noEmit": true
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"]
