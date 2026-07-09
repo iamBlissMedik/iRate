@@ -93,4 +93,21 @@ describe("HttpClient", () => {
     await expect(client.get("/users/me")).rejects.toBeInstanceOf(ApiError);
     expect(onUnauthorized).toHaveBeenCalledOnce();
   });
+
+  it("serializes query params into the URL (pagination + search)", async () => {
+    const fn = mockFetch({ ok: true, status: 200, body: { success: true, message: "", data: null } });
+    const client = new HttpClient();
+    await client.get("/admin/users", { params: { page: 2, limit: 10, search: "ada" } });
+    const url = String(fn.mock.calls[0]?.[0]);
+    expect(url).toContain("/admin/users?page=2&limit=10&search=ada");
+  });
+
+  it("omits undefined/null query params (e.g. empty search)", async () => {
+    const fn = mockFetch({ ok: true, status: 200, body: { success: true, message: "", data: null } });
+    const client = new HttpClient();
+    await client.get("/admin/users", { params: { page: 1, limit: 10, search: undefined } });
+    const url = String(fn.mock.calls[0]?.[0]);
+    expect(url).toContain("page=1&limit=10");
+    expect(url).not.toContain("search");
+  });
 });

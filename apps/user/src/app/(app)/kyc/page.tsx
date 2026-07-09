@@ -90,8 +90,8 @@ export default function KycPage() {
                     <option value="NIN">NIN</option>
                     <option value="BVN">BVN</option>
                     <option value="PASSPORT">Passport</option>
-                    <option value="DRIVERS_LICENSE">Driver's license</option>
-                    <option value="VOTERS_CARD">Voter's card</option>
+                    <option value="DRIVERS_LICENSE">Driver&apos;s license</option>
+                    <option value="VOTERS_CARD">Voter&apos;s card</option>
                   </select>
                 </Field>
                 <Field id="idNumber" label="ID number" error={errors.idNumber?.message}>
