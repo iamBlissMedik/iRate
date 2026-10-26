@@ -1,10 +1,9 @@
 "use client";
 
+import { useId } from "react";
 import {
   Area,
   AreaChart as ReAreaChart,
-  Bar,
-  BarChart as ReBarChart,
   CartesianGrid,
   Cell,
   Pie,
@@ -14,7 +13,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { cn } from "../lib/cn";
+import { cn } from "@irate/ui/lib/utils";
 
 const CHART_COLORS = [
   "var(--color-chart-1)",
@@ -30,6 +29,9 @@ const axisProps = {
   tickLine: false,
   axisLine: false,
 } as const;
+
+/** Short axis labels: 60000 → "60K". */
+const compact = new Intl.NumberFormat("en", { notation: "compact" });
 
 interface TooltipPayloadItem {
   name?: string | number;
@@ -60,10 +62,8 @@ function ChartTooltip({
             className="size-2 rounded-full"
             style={{ backgroundColor: item.color ?? CHART_COLORS[i % CHART_COLORS.length] }}
           />
-          <span className="tabular-nums text-popover-foreground">
-            {formatter && typeof item.value === "number"
-              ? formatter(item.value)
-              : item.value}
+          <span className="text-popover-foreground tabular-nums">
+            {formatter && typeof item.value === "number" ? formatter(item.value) : item.value}
           </span>
         </div>
       ))}
@@ -96,7 +96,7 @@ export function AreaTrendChart({
   ariaLabel,
 }: TrendChartProps) {
   const color = CHART_COLORS[colorIndex % CHART_COLORS.length];
-  const gradientId = `area-grad-${colorIndex}`;
+  const gradientId = `area-${useId()}`;
   return (
     <div
       className={cn("w-full", className)}
@@ -114,7 +114,7 @@ export function AreaTrendChart({
           </defs>
           <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 3" />
           <XAxis dataKey="label" {...axisProps} />
-          <YAxis {...axisProps} width={48} />
+          <YAxis {...axisProps} width={48} tickFormatter={(n: number) => compact.format(n)} />
           <Tooltip
             cursor={{ stroke: "var(--color-border)" }}
             content={<ChartTooltip formatter={valueFormatter} />}
@@ -133,92 +133,63 @@ export function AreaTrendChart({
   );
 }
 
-/** Bar chart — daily counts, user signups, etc. */
-export function BarTrendChart({
-  data,
-  className,
-  height = 240,
-  colorIndex = 1,
-  valueFormatter,
-  ariaLabel,
-}: TrendChartProps) {
-  const color = CHART_COLORS[colorIndex % CHART_COLORS.length];
-  return (
-    <div
-      className={cn("w-full", className)}
-      style={{ height }}
-      role="img"
-      aria-label={ariaLabel ?? "Bar chart"}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <ReBarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-          <CartesianGrid vertical={false} stroke="var(--color-border)" strokeDasharray="3 3" />
-          <XAxis dataKey="label" {...axisProps} />
-          <YAxis {...axisProps} width={48} />
-          <Tooltip
-            cursor={{ fill: "var(--color-muted)", opacity: 0.4 }}
-            content={<ChartTooltip formatter={valueFormatter} />}
-          />
-          <Bar dataKey="value" fill={color} radius={[6, 6, 0, 0]} animationDuration={700} />
-        </ReBarChart>
-      </ResponsiveContainer>
-    </div>
-  );
-}
-
 export interface DonutSlice {
   label: string;
   value: number;
 }
 
-/** Donut chart — distribution (e.g. KYC status breakdown). */
+/** Donut chart with a legend — distributions such as KYC status or cashflow. */
 export function DonutChart({
   data,
   className,
-  height = 240,
-  valueFormatter,
-  colors,
+  height = 220,
+  valueFormatter = (n) => n.toLocaleString(),
+  colors = CHART_COLORS,
   ariaLabel,
 }: {
   data: DonutSlice[];
   className?: string;
   height?: number;
   valueFormatter?: (n: number) => string;
-  /** Override the default palette (e.g. semantic status colors). */
+  /** Override the default palette (e.g. semantic status colours). */
   colors?: string[];
   /** Accessible description of the chart for screen readers. */
   ariaLabel?: string;
 }) {
-  const palette = colors ?? CHART_COLORS;
+  const colorAt = (i: number) => colors[i % colors.length];
   return (
-    <div
-      className={cn("w-full", className)}
-      style={{ height }}
-      role="img"
-      aria-label={ariaLabel ?? "Donut distribution chart"}
-    >
-      <ResponsiveContainer width="100%" height="100%">
-        <RePieChart>
-          <Pie
-            data={data}
-            dataKey="value"
-            nameKey="label"
-            innerRadius="60%"
-            outerRadius="85%"
-            paddingAngle={2}
-            stroke="var(--color-card)"
-            strokeWidth={2}
-            animationDuration={700}
-          >
-            {data.map((_, i) => (
-              <Cell key={i} fill={palette[i % palette.length]} />
-            ))}
-          </Pie>
-          <Tooltip content={<ChartTooltip formatter={valueFormatter} />} />
-        </RePieChart>
-      </ResponsiveContainer>
+    <div className={cn("w-full", className)}>
+      <div style={{ height }} role="img" aria-label={ariaLabel ?? "Donut distribution chart"}>
+        <ResponsiveContainer width="100%" height="100%">
+          <RePieChart>
+            <Pie
+              data={data}
+              dataKey="value"
+              nameKey="label"
+              innerRadius="60%"
+              outerRadius="85%"
+              paddingAngle={2}
+              stroke="var(--color-card)"
+              strokeWidth={2}
+              animationDuration={700}
+            >
+              {data.map((slice, i) => (
+                <Cell key={slice.label} fill={colorAt(i)} />
+              ))}
+            </Pie>
+            <Tooltip content={<ChartTooltip formatter={valueFormatter} />} />
+          </RePieChart>
+        </ResponsiveContainer>
+      </div>
+      <ul className="mt-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
+        {data.map((slice, i) => (
+          <li key={slice.label} className="flex items-center gap-2">
+            <span className="size-2.5 rounded-full" style={{ backgroundColor: colorAt(i) }} />
+            <span className="text-muted-foreground">{slice.label}</span>
+            <span className="font-medium tabular-nums">{valueFormatter(slice.value)}</span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
-
-export { CHART_COLORS };

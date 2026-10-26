@@ -11,17 +11,15 @@ export default function AppError({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Hook for an error-tracking service (Sentry/LogRocket) — see observability seam.
+    // Observability seam: report to an error tracker (Sentry, Datadog) here.
     console.error("[route error]", error);
   }, [error]);
 
   return (
-    <div className="py-10">
-      <ErrorState
-        title="This page hit a snag"
-        description="We couldn't load this view. You can retry, or head back to your dashboard."
-        onRetry={reset}
-      />
-    </div>
+    <ErrorState
+      title="This page hit a snag"
+      description="We couldn't load this view. Try again, or head back to your dashboard."
+      onRetry={reset}
+    />
   );
 }

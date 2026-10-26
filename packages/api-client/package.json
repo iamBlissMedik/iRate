@@ -16,8 +16,7 @@
     "clean": "rm -rf .turbo node_modules dist"
   },
   "dependencies": {
-    "@irate/contracts": "*",
-    "zod": "^4.1.12"
+    "@irate/contracts": "*"
   },
   "peerDependencies": {
     "@tanstack/react-query": "^5.x",

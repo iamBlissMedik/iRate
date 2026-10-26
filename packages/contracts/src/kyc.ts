@@ -4,9 +4,7 @@ import { KYCIdType, KYCStatus } from "./enums";
 
 export const kycSubmitSchema = z.object({
   fullName: z.string().min(2, "Enter your full legal name").max(120),
-  dateOfBirth: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}/, "Enter a valid date of birth"),
+  dateOfBirth: z.string().regex(/^\d{4}-\d{2}-\d{2}/, "Enter a valid date of birth"),
   address: z.string().min(5, "Enter your residential address").max(200),
   idType: KYCIdType,
   idNumber: z.string().min(4, "Enter a valid ID number").max(40),
@@ -28,12 +26,3 @@ export const kycRecordSchema = z.object({
   createdAt: IsoDateTime.optional(),
 });
 export type KYCRecord = z.infer<typeof kycRecordSchema>;
-
-export const kycStatusSchema = z.object({
-  status: KYCStatus,
-  submittedAt: IsoDateTime.nullable().optional(),
-  verifiedAt: IsoDateTime.nullable().optional(),
-});
-export type KYCStatusResult = z.infer<typeof kycStatusSchema>;
-
-// Admin KYC review lives in `admin.ts` (backend expects `{ action }`).

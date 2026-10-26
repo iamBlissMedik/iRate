@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatMoney,
-  majorToMinor,
-  maskAccountNumber,
-  minorToMajorNumber,
-} from "../money";
+import { formatMoney, majorToMinor, maskAccountNumber, minorToMajorNumber } from "../money";
 
 describe("formatMoney", () => {
   it("formats kobo minor units as naira", () => {

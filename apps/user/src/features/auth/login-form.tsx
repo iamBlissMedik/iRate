@@ -3,88 +3,79 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
 import { loginSchema, type LoginInput } from "@irate/contracts";
 import { useLogin } from "@irate/api-client/react";
-import { ApiError } from "@irate/api-client";
-import { Button, Input, Label, toast } from "@irate/ui";
-import { FadeIn } from "@irate/ui/motion";
+import { getErrorMessage, safeRedirectPath } from "@irate/api-client";
+import {
+  Alert,
+  AlertDescription,
+  Button,
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+  Input,
+  toast,
+} from "@irate/ui";
 
 export function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
   const login = useLogin();
-
   const {
     register,
     handleSubmit,
-    setError,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
 
-  useEffect(() => {
-    if (params.get("session") === "expired") {
-      toast.info("Your session expired", "Please sign in again to continue.");
-    }
-  }, [params]);
-
-  const onSubmit = handleSubmit(async (values) => {
-    try {
-      await login.mutateAsync(values);
-      toast.success("Welcome back");
-      router.replace(params.get("from") ?? "/dashboard");
-      router.refresh();
-    } catch (err) {
-      if (err instanceof ApiError && err.isValidation) {
-        for (const [field, message] of Object.entries(err.toFieldRecord())) {
-          setError(field as keyof LoginInput, { message });
-        }
-      } else if (err instanceof ApiError) {
-        toast.error(err.message);
-      }
-    }
-  });
+  const onSubmit = handleSubmit((values) =>
+    login.mutate(values, {
+      onSuccess: () => router.replace(safeRedirectPath(params.get("from"), "/dashboard")),
+      onError: (error) => toast.error(getErrorMessage(error, "Sign in failed")),
+    }),
+  );
 
   return (
-    <FadeIn>
-      <form onSubmit={onSubmit} className="space-y-5" noValidate>
-        <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+    <form onSubmit={onSubmit} noValidate>
+      <FieldGroup className="gap-5">
+        {params.get("session") === "expired" ? (
+          <Alert>
+            <AlertDescription>Your session expired. Please sign in again.</AlertDescription>
+          </Alert>
+        ) : null}
+
+        <Field data-invalid={!!errors.email}>
+          <FieldLabel htmlFor="email">Email</FieldLabel>
           <Input
             id="email"
             type="email"
             autoComplete="email"
             placeholder="you@example.com"
-            error={Boolean(errors.email)}
+            aria-invalid={!!errors.email}
             {...register("email")}
           />
-          {errors.email ? (
-            <p className="text-xs text-destructive">{errors.email.message}</p>
-          ) : null}
-        </div>
+          <FieldError errors={[errors.email]} />
+        </Field>
 
-        <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+        <Field data-invalid={!!errors.password}>
+          <FieldLabel htmlFor="password">Password</FieldLabel>
           <Input
             id="password"
             type="password"
             autoComplete="current-password"
-            placeholder="••••••••"
-            error={Boolean(errors.password)}
+            aria-invalid={!!errors.password}
             {...register("password")}
           />
-          {errors.password ? (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
-          ) : null}
-        </div>
+          <FieldError errors={[errors.password]} />
+        </Field>
 
-        <Button type="submit" className="w-full" loading={isSubmitting || login.isPending}>
+        <Button type="submit" className="w-full" loading={login.isPending}>
           Sign in
         </Button>
-      </form>
-    </FadeIn>
+      </FieldGroup>
+    </form>
   );
 }

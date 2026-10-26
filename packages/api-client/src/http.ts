@@ -59,8 +59,6 @@ export interface HttpClientConfig {
   timeoutMs?: number;
   /** Whether to send cookies (always true in the browser for the BFF). */
   withCredentials?: boolean;
-  /** Called once when a request returns 401 — apps redirect to login here. */
-  onUnauthorized?: () => void;
   /** Inject auth header (used by the server-side BFF client). */
   getAuthHeader?: () => Record<string, string> | undefined;
 }
@@ -162,11 +160,7 @@ export class HttpClient {
         method,
         headers,
         body:
-          body === undefined
-            ? undefined
-            : body instanceof FormData
-              ? body
-              : JSON.stringify(body),
+          body === undefined ? undefined : body instanceof FormData ? body : JSON.stringify(body),
         credentials: this.config.withCredentials ? "include" : "same-origin",
         signal: controller.signal,
       });
@@ -184,11 +178,7 @@ export class HttpClient {
     clearTimeout(timeout);
 
     const data = await this.parse<T>(response);
-    return validateResponse(
-      data,
-      options.schema,
-      options.schemaLabel ?? `${method} ${path}`,
-    ) as T;
+    return validateResponse(data, options.schema, options.schemaLabel ?? `${method} ${path}`) as T;
   }
 
   private async parse<T>(response: Response): Promise<T> {
@@ -207,7 +197,6 @@ export class HttpClient {
       | undefined;
 
     if (!response.ok) {
-      if (response.status === 401) this.config.onUnauthorized?.();
       throw new ApiError({
         status: response.status,
         message: envelope?.message || response.statusText || "Request failed",

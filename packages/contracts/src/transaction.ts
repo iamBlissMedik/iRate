@@ -1,11 +1,9 @@
 import { z } from "zod";
-import { AmountMinorInput, IsoDateTime, MoneyMinor } from "./common";
+import { AmountMajorInput, AmountMinorInput, IsoDateTime, MoneyMinor } from "./common";
 import { TransactionDirection, TransactionType } from "./enums";
 
 /** A 10-digit NUBAN-style account number. */
-export const accountNumberSchema = z
-  .string()
-  .regex(/^\d{10}$/, "Account number must be 10 digits");
+export const accountNumberSchema = z.string().regex(/^\d{10}$/, "Account number must be 10 digits");
 
 /** Name-enquiry result — never leaks email or balance. (Backend key: `accountName`.) */
 export const resolveAccountSchema = z.object({
@@ -37,8 +35,6 @@ export const transactionEntrySchema = z.object({
 });
 export type TransactionEntry = z.infer<typeof transactionEntrySchema>;
 
-export const transactionListSchema = z.array(transactionEntrySchema);
-
 /** Backend pagination meta (shared by transaction/wallet list endpoints). */
 export const pageMetaSchema = z.object({
   total: z.number().int(),
@@ -65,6 +61,10 @@ export const transferSchema = z.object({
   note: z.string().max(140).optional(),
 });
 export type TransferInput = z.infer<typeof transferSchema>;
+
+/** The send-money form: same fields, but the amount is typed in major units. */
+export const transferFormSchema = transferSchema.extend({ amount: AmountMajorInput });
+export type TransferFormInput = z.infer<typeof transferFormSchema>;
 
 export const transferResultSchema = z.object({
   id: z.string(),

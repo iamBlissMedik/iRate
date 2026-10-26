@@ -11,8 +11,6 @@ export const walletSchema = z.object({
 });
 export type Wallet = z.infer<typeof walletSchema>;
 
-export const walletListSchema = z.array(walletSchema);
-
 /** `GET /wallets` envelope: `{ wallets, pagination }`. */
 export const walletPageSchema = z.object({
   wallets: z.array(walletSchema),
@@ -33,8 +31,3 @@ export const walletBalanceSchema = z.object({
   currency: z.string().default("NGN"),
 });
 export type WalletBalance = z.infer<typeof walletBalanceSchema>;
-
-export const createWalletSchema = z.object({
-  currency: z.string().default("NGN"),
-});
-export type CreateWalletInput = z.infer<typeof createWalletSchema>;

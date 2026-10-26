@@ -1,76 +1,74 @@
-// Utilities
-export { cn } from "./lib/cn";
+/**
+ * @irate/ui — the shared design system.
+ *
+ * - `components/ui/*` are shadcn/ui components (added with the shadcn CLI and
+ *   owned by us); the most used ones are re-exported here.
+ * - `components/*` are iRate compositions built on top of them.
+ * - Charts and motion live in their own entry points (`@irate/ui/charts`,
+ *   `@irate/ui/motion`) so pages that don't need them don't pull them in.
+ *
+ * Anything not re-exported here can be imported directly, e.g.
+ * `import { Sheet } from "@irate/ui/components/ui/sheet"`.
+ */
 
-// Theme
-export { ThemeProvider, useTheme } from "./theme/theme-provider";
-export { ThemeToggle } from "./theme/theme-toggle";
+export { cn } from "./lib/utils";
 
-// Feedback
-export { Toaster, toast } from "./feedback/toast";
-
-// Brand
-export { Logo } from "./brand/logo";
-
-// Primitives
-export { Button, buttonVariants } from "./primitives/button";
-export type { ButtonProps } from "./primitives/button";
+/* shadcn/ui */
+export { Alert, AlertDescription, AlertTitle } from "./components/ui/alert";
+export { Badge, badgeVariants } from "./components/ui/badge";
+export { Button, buttonVariants } from "./components/ui/button";
 export {
   Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from "./primitives/card";
-export { Input } from "./primitives/input";
-export { Textarea } from "./primitives/textarea";
-export { Label } from "./primitives/label";
-export { Badge, badgeVariants } from "./primitives/badge";
-export { Skeleton } from "./primitives/skeleton";
-export { Spinner } from "./primitives/spinner";
-export { Alert, AlertTitle, AlertDescription } from "./primitives/alert";
-export { Avatar, AvatarImage, AvatarFallback } from "./primitives/avatar";
-export { Separator } from "./primitives/separator";
-export { Switch } from "./primitives/switch";
+} from "./components/ui/card";
 export {
   Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogFooter,
-  DialogTitle,
-  DialogDescription,
   DialogClose,
-} from "./primitives/dialog";
-export {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuGroup,
-} from "./primitives/dropdown-menu";
-export {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "./primitives/tooltip";
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./components/ui/dialog";
+export { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "./components/ui/field";
+export { Input } from "./components/ui/input";
+export { Label } from "./components/ui/label";
+export { NativeSelect, NativeSelectOption } from "./components/ui/native-select";
+export { Separator } from "./components/ui/separator";
+export { Skeleton } from "./components/ui/skeleton";
+export { Toaster } from "./components/ui/sonner";
+export { toast } from "sonner";
+export { Spinner } from "./components/ui/spinner";
 export {
   Table,
-  TableHeader,
   TableBody,
-  TableFooter,
-  TableRow,
-  TableHead,
-  TableCell,
   TableCaption,
-} from "./primitives/table";
+  TableCell,
+  TableFooter,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "./components/ui/table";
+export { Tabs, TabsContent, TabsList, TabsTrigger } from "./components/ui/tabs";
 
-// Data display
-export { Money, BalanceAmount } from "./data/money";
-export { StatCard } from "./data/stat-card";
-export type { StatCardProps } from "./data/stat-card";
-export { EmptyState } from "./data/empty-state";
-export { ErrorState } from "./data/error-state";
+/* iRate compositions */
+export { AppShell } from "./components/app-shell";
+export { AuthLayout } from "./components/auth-layout";
+export type { AppShellProps, LinkComponent, NavItem } from "./components/app-shell";
+export { EmptyState } from "./components/empty-state";
+export { ErrorState } from "./components/error-state";
+export { KycStatusBadge } from "./components/kyc-status-badge";
+export { Logo } from "./components/logo";
+export { BalanceAmount, Money } from "./components/money";
+export type { MoneyProps } from "./components/money";
+export { PageHeader } from "./components/page-header";
+export { StatCard } from "./components/stat-card";
+export type { StatCardProps } from "./components/stat-card";
+export { ThemeProvider } from "./components/theme-provider";
+export { ThemeToggle } from "./components/theme-toggle";

@@ -19,6 +19,13 @@ export interface BffConfig {
   refreshMaxAge: number;
   /** Mark cookies Secure (true in production / behind HTTPS). */
   secure: boolean;
+  /**
+   * How many reverse proxies sit in front of this Next.js app (Vercel, nginx, a
+   * load balancer...). Used to find the browser's real IP in X-Forwarded-For,
+   * which the BFF forwards to the API for per-IP rate limits and audit logs.
+   * See client-ip.ts.
+   */
+  trustedProxyHops: number;
 }
 
 function env(key: string, fallback?: string): string {
@@ -46,6 +53,16 @@ export function getBffConfig(): BffConfig {
     accessMaxAge: Number(process.env.IRATE_ACCESS_MAX_AGE || 60 * 15), // 15 min
     refreshMaxAge: Number(process.env.IRATE_REFRESH_MAX_AGE || 60 * 60 * 24 * 7), // 7 days
     secure: isProd,
+    trustedProxyHops: proxyHops(process.env.IRATE_TRUSTED_PROXY_HOPS),
   };
   return cached;
+}
+
+function proxyHops(raw: string | undefined): number {
+  if (raw === undefined || raw === "") return 0;
+  const hops = Number(raw);
+  if (!Number.isInteger(hops) || hops < 0 || hops > 10) {
+    throw new Error(`[bff] IRATE_TRUSTED_PROXY_HOPS must be an integer from 0 to 10, got "${raw}"`);
+  }
+  return hops;
 }

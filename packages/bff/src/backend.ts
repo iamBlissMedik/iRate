@@ -26,7 +26,11 @@ function getSetCookies(res: Response): string[] {
   return single ? [single] : [];
 }
 
-/** Low-level call to the real backend. Never throws on non-2xx. */
+/**
+ * Low-level call to the real backend. Never throws: non-2xx responses are
+ * returned as-is and an unreachable backend becomes a 502 envelope, so every
+ * BFF route answers with JSON the browser client understands.
+ */
 export async function callBackend<T = unknown>(
   path: string,
   init: {
@@ -40,32 +44,39 @@ export async function callBackend<T = unknown>(
   const cfg = getBffConfig();
   const url = `${cfg.backendBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    ...init.headers,
-  };
+  // `Headers` is case-insensitive and `set` replaces: a forwarded browser
+  // "content-type" plus our "Content-Type" must not merge into the invalid
+  // "application/json, application/json" (strict backends answer 415).
+  const headers = new Headers({ Accept: "application/json" });
+  for (const [key, value] of Object.entries(init.headers ?? {})) headers.set(key, value);
   if (init.body !== undefined && !(init.body instanceof FormData)) {
-    headers["Content-Type"] = "application/json";
+    headers.set("Content-Type", "application/json");
   }
-  if (init.accessToken) headers.Authorization = `Bearer ${init.accessToken}`;
+  if (init.accessToken) headers.set("Authorization", `Bearer ${init.accessToken}`);
   if (init.refreshToken) {
     // Present the refresh token the way the backend expects (httpOnly cookie).
-    headers.Cookie = `${cfg.backendRefreshCookie}=${init.refreshToken}`;
+    headers.set("Cookie", `${cfg.backendRefreshCookie}=${init.refreshToken}`);
   }
 
-  const res = await fetch(url, {
-    method: init.method ?? "GET",
-    headers,
-    body:
-      init.body === undefined
-        ? undefined
-        : init.body instanceof FormData
-          ? init.body
-          : JSON.stringify(init.body),
-    // We manage cookies ourselves; do not let fetch persist them.
-    redirect: "manual",
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: init.method ?? "GET",
+      headers,
+      body:
+        init.body === undefined
+          ? undefined
+          : init.body instanceof FormData
+            ? init.body
+            : JSON.stringify(init.body),
+      // We manage cookies ourselves; do not let fetch persist them.
+      redirect: "manual",
+      cache: "no-store",
+    });
+  } catch {
+    const body = { success: false, message: "Could not reach the iRate API. Please try again." };
+    return { status: 502, ok: false, body: body as T, raw: JSON.stringify(body) };
+  }
 
   const raw = await res.text();
   let body: unknown = undefined;

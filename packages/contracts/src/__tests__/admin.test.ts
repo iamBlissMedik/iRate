@@ -24,7 +24,14 @@ describe("adminUsersResponseSchema", () => {
         },
         { id: "u2", email: "no-kyc@irate.dev", role: "USER", kyc: null, wallets: [] },
       ],
-      pagination: { total: 2, page: 1, limit: 10, totalPages: 1, hasNextPage: false, hasPrevPage: false },
+      pagination: {
+        total: 2,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+      },
     };
     const parsed = adminUsersResponseSchema.parse(sample);
     expect(parsed.users[0]?.wallets[0]?.balance).toBe("4800000");
@@ -69,10 +76,28 @@ describe("adminOverviewSchema", () => {
   it("parses the nested overview (counts as numbers, money as strings)", () => {
     const sample = {
       usersStats: { title: "Total Users", value: 8, trend: 0, trendType: "neutral" },
-      walletsBalance: { title: "Total Wallet Balance", value: "62500000", currency: "NGN", wallets: 3, trend: 2.4, trendType: "up" },
+      walletsBalance: {
+        title: "Total Wallet Balance",
+        value: "62500000",
+        currency: "NGN",
+        wallets: 3,
+        trend: 2.4,
+        trendType: "up",
+      },
       transactionStats: { title: "Transactions", value: 12, trend: 1, trendType: "up" },
-      totalCashflow: { title: "Total Cashflow", value: "100000", credit: "200000", debit: "100000", currency: "NGN" },
-      transactionVolume: { title: "Transaction Volume", value: "250000", trend: -5, trendType: "down" },
+      totalCashflow: {
+        title: "Total Cashflow",
+        value: "100000",
+        credit: "200000",
+        debit: "100000",
+        currency: "NGN",
+      },
+      transactionVolume: {
+        title: "Transaction Volume",
+        value: "250000",
+        trend: -5,
+        trendType: "down",
+      },
     };
     const parsed = adminOverviewSchema.parse(sample);
     expect(parsed.usersStats.value).toBe(8);

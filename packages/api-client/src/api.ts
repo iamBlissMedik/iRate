@@ -47,6 +47,12 @@ import { routes } from "./routes";
 
 type Opts = Pick<HttpRequestOptions, "signal">;
 
+/** For lookups where "not found" is a valid answer: map a 404 to `null`. */
+function nullOn404(error: unknown): null {
+  if (error instanceof ApiError && error.status === 404) return null;
+  throw error;
+}
+
 /**
  * Typed endpoint surface over an {@link HttpClient}. Every method maps 1:1 to a
  * backend route (via the BFF) and returns the unwrapped `data` payload.
@@ -86,11 +92,14 @@ export function createApi(client: HttpClient) {
     },
 
     transaction: {
+      // Name enquiry 404s for an unknown account — that's an answer, not a failure.
       resolve: (accountNumber: string, opts?: Opts) =>
-        client.get<ResolvedAccount>(routes.transaction.resolve(accountNumber), {
-          schema: resolveAccountSchema,
-          ...opts,
-        }),
+        client
+          .get<ResolvedAccount>(routes.transaction.resolve(accountNumber), {
+            schema: resolveAccountSchema,
+            ...opts,
+          })
+          .catch(nullOn404),
       transfer: (input: TransferInput, idempotencyKey?: string) =>
         client.post<TransferResult>(routes.transaction.transfer, input, {
           idempotencyKey,
@@ -103,11 +112,7 @@ export function createApi(client: HttpClient) {
             ...opts,
           })
           .then((r) => r.transactions ?? []),
-      forWallet: (
-        walletId: string,
-        query: { page?: number; limit?: number } = {},
-        opts?: Opts,
-      ) =>
+      forWallet: (walletId: string, query: { page?: number; limit?: number } = {}, opts?: Opts) =>
         client.get<TransactionPage>(routes.transaction.forWallet(walletId), {
           params: query,
           schema: transactionPageSchema,
@@ -122,10 +127,7 @@ export function createApi(client: HttpClient) {
       status: (opts?: Opts) =>
         client
           .get<KYCRecord>(routes.kyc.status, { schema: kycRecordSchema, ...opts })
-          .catch((err) => {
-            if (err instanceof ApiError && err.status === 404) return null;
-            throw err;
-          }),
+          .catch(nullOn404),
     },
 
     admin: {

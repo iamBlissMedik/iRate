@@ -1,26 +1,16 @@
-"use client";
-
-import { DashboardStats, CashflowChart } from "@/features/dashboard";
-import { FadeIn } from "@irate/ui/motion";
+import { PageHeader } from "@irate/ui";
+import { CashflowChart } from "@/features/dashboard/cashflow-chart";
+import { DashboardStats } from "@/features/dashboard/dashboard-stats";
+import { KycDistribution } from "@/features/kyc/kyc-distribution";
 
 export default function DashboardPage() {
   return (
-    <div className="space-y-6 p-6 lg:p-10">
-      <FadeIn>
-        <div className="mb-2">
-          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Overview of system performance and activity
-          </p>
-        </div>
-      </FadeIn>
-
-      {/* Top stat cards (staggered) */}
+    <div className="space-y-6">
+      <PageHeader title="Dashboard" description="Platform health and activity at a glance." />
       <DashboardStats />
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <CashflowChart />
+        <KycDistribution />
       </div>
     </div>
   );

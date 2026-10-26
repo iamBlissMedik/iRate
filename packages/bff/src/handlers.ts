@@ -2,10 +2,10 @@ import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import type { UserRole } from "@irate/contracts";
 import { callBackend, extractAccessToken, refreshSession } from "./backend";
-import { clearAuthCookies, setAuthCookies } from "./cookies";
-import { getBffConfig } from "./config";
+import { clientIpHeaders } from "./client-ip";
+import { clearAuthCookies, readAuthCookies, setAuthCookies } from "./cookies";
 import { sessionUserFromToken } from "./jwt";
-import { API_AUTH_PATHS } from "./paths";
+import { applySession, isRejected, resolveSession } from "./session";
 
 export interface LoginHandlerOptions {
   /** Restrict who may obtain a session here (e.g. ["ADMIN"] for the admin app). */
@@ -14,8 +14,7 @@ export interface LoginHandlerOptions {
 
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status });
 
-const ok = (data: unknown, message = "OK") =>
-  json({ success: true, message, data });
+const ok = (data: unknown, message = "OK") => json({ success: true, message, data });
 
 const fail = (status: number, message: string, extra?: Record<string, unknown>) =>
   json({ success: false, message, ...extra }, status);
@@ -31,7 +30,13 @@ export function createLoginHandler(options: LoginHandlerOptions = {}) {
       return fail(400, "Invalid request body");
     }
 
-    const result = await callBackend("/auth/login", { method: "POST", body });
+    // Forward the browser's IP so the API's per-IP login limit is per customer,
+    // not one budget shared by everyone behind the BFF.
+    const result = await callBackend("/auth/login", {
+      method: "POST",
+      body,
+      headers: clientIpHeaders(req.headers),
+    });
     if (!result.ok) {
       return json(result.body ?? { success: false, message: "Login failed" }, result.status);
     }
@@ -41,7 +46,7 @@ export function createLoginHandler(options: LoginHandlerOptions = {}) {
 
     const user = sessionUserFromToken(accessToken);
 
-    // Role gate (defense in depth — also enforced in middleware). Never set a
+    // Role gate (defense in depth — also enforced in the proxy). Never set a
     // cookie for a disallowed role.
     if (options.allowedRoles && (!user || !options.allowedRoles.includes(user.role))) {
       return fail(403, "You do not have access to this application.");
@@ -65,12 +70,13 @@ export function createRegisterHandler() {
       return fail(400, "Invalid request body");
     }
 
-    const result = await callBackend("/auth/register", { method: "POST", body });
+    const result = await callBackend("/auth/register", {
+      method: "POST",
+      body,
+      headers: clientIpHeaders(req.headers),
+    });
     if (!result.ok) {
-      return json(
-        result.body ?? { success: false, message: "Registration failed" },
-        result.status,
-      );
+      return json(result.body ?? { success: false, message: "Registration failed" }, result.status);
     }
 
     // If the backend also returns a session on register, persist it.
@@ -88,18 +94,17 @@ export function createRegisterHandler() {
 /* ------------------------------------------------------------ POST /logout */
 
 export function createLogoutHandler() {
-  return async function POST() {
+  return async function POST(req: NextRequest) {
     const store = await cookies();
-    const cfg = getBffConfig();
-    const accessToken = store.get(cfg.accessCookie)?.value;
-    const refreshToken = store.get(cfg.refreshCookie)?.value;
+    const { accessToken, refreshToken } = readAuthCookies(store);
 
-    // Best-effort backend revocation; we clear local cookies regardless.
-    try {
-      await callBackend("/auth/logout", { method: "POST", accessToken, refreshToken });
-    } catch {
-      /* ignore — local logout still succeeds */
-    }
+    // Best-effort backend revocation; local cookies are cleared regardless.
+    await callBackend("/auth/logout", {
+      method: "POST",
+      accessToken,
+      refreshToken,
+      headers: clientIpHeaders(req.headers),
+    });
 
     clearAuthCookies(store);
     return ok({ authenticated: false }, "Signed out");
@@ -111,10 +116,9 @@ export function createLogoutHandler() {
 export function createSessionHandler() {
   return async function GET() {
     const store = await cookies();
-    const cfg = getBffConfig();
-    const token = store.get(cfg.accessCookie)?.value;
-    const user = token ? sessionUserFromToken(token) : null;
-    return ok({ authenticated: Boolean(user), user });
+    const session = await resolveSession(store);
+    applySession(store, session);
+    return ok({ authenticated: session.user !== null, user: session.user });
   };
 }
 
@@ -125,22 +129,22 @@ export interface ProxyOptions {
   stripPrefix?: string;
 }
 
-const HOP_BY_HOP = new Set([
-  "host",
-  "connection",
-  "content-length",
-  "accept-encoding",
-  "cookie",
-]);
+const HOP_BY_HOP = new Set(["host", "connection", "content-length", "accept-encoding", "cookie"]);
+
+/**
+ * Client-address headers are never copied from the browser: they are
+ * client-controlled and would let anyone pick the IP the API rate-limits and
+ * audits. The BFF sends its own value instead (see client-ip.ts).
+ */
+const isClientAddressHeader = (key: string) =>
+  key === "forwarded" || key === "x-real-ip" || key.startsWith("x-forwarded-");
 
 export function createProxyHandler(options: ProxyOptions = {}) {
   const stripPrefix = options.stripPrefix ?? "/api/v1";
 
   async function handle(req: NextRequest): Promise<NextResponse> {
     const store = await cookies();
-    const cfg = getBffConfig();
-    let accessToken = store.get(cfg.accessCookie)?.value;
-    const refreshToken = store.get(cfg.refreshCookie)?.value;
+    const { accessToken, refreshToken } = readAuthCookies(store);
 
     if (!accessToken && !refreshToken) {
       return fail(401, "Not authenticated");
@@ -149,13 +153,16 @@ export function createProxyHandler(options: ProxyOptions = {}) {
     const { pathname, search } = req.nextUrl;
     const backendPath = `${pathname.slice(stripPrefix.length) || "/"}${search}`;
 
-    // Forward safe headers (notably Idempotency-Key for transfers).
+    // Forward safe headers (notably Idempotency-Key for transfers), plus the
+    // browser's IP as resolved through our trusted proxies.
     const headers: Record<string, string> = {};
     req.headers.forEach((value, key) => {
-      if (!HOP_BY_HOP.has(key.toLowerCase()) && key.toLowerCase() !== "authorization") {
+      const name = key.toLowerCase();
+      if (!HOP_BY_HOP.has(name) && name !== "authorization" && !isClientAddressHeader(name)) {
         headers[key] = value;
       }
     });
+    Object.assign(headers, clientIpHeaders(req.headers));
 
     const method = req.method.toUpperCase();
     const hasBody = method !== "GET" && method !== "HEAD";
@@ -174,17 +181,16 @@ export function createProxyHandler(options: ProxyOptions = {}) {
     // Transparent refresh on a single 401 (single-flight across concurrent calls).
     if (result.status === 401 && refreshToken) {
       const refreshed = await refreshSession(refreshToken);
-      const newAccess = extractAccessToken(refreshed.body);
-      if (refreshed.ok && newAccess) {
-        accessToken = newAccess;
-        setAuthCookies(store, {
-          accessToken: newAccess,
-          refreshToken: refreshed.refreshToken,
-        });
+      const newAccess = refreshed.ok ? extractAccessToken(refreshed.body) : undefined;
+      if (newAccess) {
+        setAuthCookies(store, { accessToken: newAccess, refreshToken: refreshed.refreshToken });
         result = await doCall(newAccess);
-      } else {
+      } else if (isRejected(refreshed)) {
         clearAuthCookies(store);
         return fail(401, "Session expired");
+      } else {
+        // Backend unreachable — keep the session and surface the outage.
+        result = refreshed;
       }
     }
 
@@ -214,5 +220,3 @@ function safeJson(raw: string): unknown {
     return raw;
   }
 }
-
-export { API_AUTH_PATHS };

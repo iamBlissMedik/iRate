@@ -11,16 +11,15 @@ export default function DashboardError({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Observability seam: report to an error tracker (Sentry, Datadog) here.
     console.error("[route error]", error);
   }, [error]);
 
   return (
-    <div className="p-6 lg:p-10">
-      <ErrorState
-        title="This view failed to load"
-        description="Something went wrong fetching this data. You can retry."
-        onRetry={reset}
-      />
-    </div>
+    <ErrorState
+      title="This view failed to load"
+      description="Something went wrong fetching this data. Try again."
+      onRetry={reset}
+    />
   );
 }

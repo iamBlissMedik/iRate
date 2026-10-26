@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useMutation,
-  useQuery,
-  useQueryClient,
-  keepPreviousData,
-  type UseQueryOptions,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient, keepPreviousData } from "@tanstack/react-query";
 import type {
   AdminKycQuery,
   AdminUsersQuery,
@@ -47,11 +41,15 @@ export function useRegister() {
   });
 }
 
-export function useLogout() {
-  const qc = useQueryClient();
+/**
+ * Sign out, then hard-navigate to the login page. The full reload drops every
+ * piece of in-memory state (query cache included); it runs even if the logout
+ * call fails, because the BFF clears its cookies regardless.
+ */
+export function useSignOut(loginPath = "/login") {
   return useMutation({
     mutationFn: () => api().auth.logout(),
-    onSuccess: () => qc.clear(),
+    onSettled: () => window.location.assign(loginPath),
   });
 }
 
@@ -73,43 +71,12 @@ export function useMe(enabled = true) {
   });
 }
 
-/* ---------------------------------------------------------------- Wallet -- */
-
-export function useWallets() {
-  return useQuery({
-    queryKey: qk.wallet.list,
-    queryFn: ({ signal }) => api().wallet.list({ signal }),
-  });
-}
-
-export function useWalletBalance(walletId: string | undefined) {
-  return useQuery({
-    queryKey: walletId ? qk.wallet.balance(walletId) : ["wallet", "balance", "none"],
-    queryFn: ({ signal }) => api().wallet.balance(walletId!, { signal }),
-    enabled: Boolean(walletId),
-  });
-}
-
 /* ----------------------------------------------------------- Transactions -- */
 
 export function useTransactions() {
   return useQuery({
     queryKey: qk.transaction.me,
     queryFn: ({ signal }) => api().transaction.me({ signal }),
-  });
-}
-
-export function useWalletTransactions(
-  walletId: string | undefined,
-  page = 1,
-  limit = 20,
-) {
-  return useQuery({
-    queryKey: qk.transaction.forWallet(walletId ?? "none", page, limit),
-    queryFn: ({ signal }) =>
-      api().transaction.forWallet(walletId!, { page, limit }, { signal }),
-    enabled: Boolean(walletId),
-    placeholderData: keepPreviousData,
   });
 }
 
@@ -168,13 +135,6 @@ export function useAdminOverview() {
   });
 }
 
-export function useAdminUserStats() {
-  return useQuery({
-    queryKey: qk.admin.userStats,
-    queryFn: ({ signal }) => api().admin.userStats({ signal }),
-  });
-}
-
 export function useAdminTotalBalance() {
   return useQuery({
     queryKey: qk.admin.walletsBalance,
@@ -218,6 +178,3 @@ export function useReviewKyc() {
     onSuccess: () => qc.invalidateQueries({ queryKey: qk.admin.all }),
   });
 }
-
-/** Escape hatch for ad-hoc calls outside the predefined hooks. */
-export { getBrowserApi } from "../browser-client";

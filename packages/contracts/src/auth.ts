@@ -50,12 +50,7 @@ export const authUserSchema = z.object({
 });
 export type AuthUser = z.infer<typeof authUserSchema>;
 
-/** Login/refresh responses expose the access token to the BFF, never the browser. */
-export const authTokensSchema = z.object({
-  accessToken: z.string(),
-});
-export type AuthTokens = z.infer<typeof authTokensSchema>;
-
+/** Login responses expose the access token to the BFF, never the browser. */
 export const loginResultSchema = z.object({
   accessToken: z.string(),
   user: authUserSchema.optional(),

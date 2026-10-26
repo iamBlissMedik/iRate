@@ -56,8 +56,9 @@ describe("resolveAccountSchema (GET /transactions/resolve/:acct)", () => {
     });
     expect(parsed.accountName).toBe("Bola");
     // The old `{ name }` shape must fail now.
-    expect(resolveAccountSchema.safeParse({ accountNumber: "1000000002", name: "Bola" }).success)
-      .toBe(false);
+    expect(
+      resolveAccountSchema.safeParse({ accountNumber: "1000000002", name: "Bola" }).success,
+    ).toBe(false);
   });
 });
 
@@ -84,9 +85,7 @@ describe("transactionPageSchema (GET /transactions/me)", () => {
 describe("walletPageSchema (GET /wallets)", () => {
   it("parses the `{ wallets, pagination }` envelope", () => {
     const parsed = walletPageSchema.parse({
-      wallets: [
-        { id: "w1", userId: "u1", accountNumber: "1000000001", balance: "4800000" },
-      ],
+      wallets: [{ id: "w1", userId: "u1", accountNumber: "1000000001", balance: "4800000" }],
       pagination: { total: 1, page: 1, limit: 10, totalPages: 1 },
     });
     expect(parsed.wallets[0]?.balance).toBe("4800000");
