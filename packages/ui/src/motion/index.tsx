@@ -1,23 +1,17 @@
 "use client";
 
-import { motion, AnimatePresence, type Variants } from "motion/react";
+import { motion, type Variants } from "motion/react";
 import type { ReactNode } from "react";
 
-export { motion, AnimatePresence };
+/** Shared easing so every entrance animation feels the same. */
+const smooth = { duration: 0.3, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] };
 
-/** Shared easing/duration tokens so motion feels consistent app-wide. */
-export const transitions = {
-  smooth: { duration: 0.3, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] },
-  quick: { duration: 0.18, ease: "easeOut" as const },
-  spring: { type: "spring" as const, stiffness: 260, damping: 24 },
-};
-
-export const fadeInUp: Variants = {
+const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0, transition: transitions.smooth },
+  show: { opacity: 1, y: 0, transition: smooth },
 };
 
-export const staggerContainer: Variants = {
+const staggerContainer: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
 };
@@ -37,7 +31,7 @@ export function FadeIn({
       className={className}
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ ...transitions.smooth, delay }}
+      transition={{ ...smooth, delay }}
     >
       {children}
     </motion.div>
@@ -47,12 +41,7 @@ export function FadeIn({
 /** Wraps a list; children rendered with <Stagger.Item> animate in sequence. */
 export function Stagger({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div
-      className={className}
-      variants={staggerContainer}
-      initial="hidden"
-      animate="show"
-    >
+    <motion.div className={className} variants={staggerContainer} initial="hidden" animate="show">
       {children}
     </motion.div>
   );
@@ -88,12 +77,11 @@ export function PageTransition({
       className={className}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={transitions.smooth}
+      transition={smooth}
     >
       {children}
     </motion.div>
   );
 }
 
-/** A number that animates from 0 → value (used for headline figures). */
 export { AnimatedNumber } from "./animated-number";

@@ -1,155 +1,152 @@
 "use client";
 
-import { Controller, useForm } from "react-hook-form";
-import { useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, Loader2 } from "lucide-react";
-import { transferSchema, type TransferInput } from "@irate/contracts";
-import { majorToMinor, formatMoney } from "@irate/contracts/money";
+import { CheckCircle2 } from "lucide-react";
+import { AmountMajorInput, transferFormSchema, type TransferFormInput } from "@irate/contracts";
+import { formatMoney, majorToMinor } from "@irate/contracts/money";
 import { useResolveAccount, useTransfer } from "@irate/api-client/react";
-import { ApiError } from "@irate/api-client";
+import { getErrorMessage } from "@irate/api-client";
 import {
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
   Input,
-  Label,
+  Spinner,
   toast,
 } from "@irate/ui";
 
-interface FormShape {
-  toAccountNumber: string;
-  amountMajor: string;
-  note?: string;
-}
-
+/** Transfer to another iRate account, with a live name enquiry on the recipient. */
 export function SendMoneyForm() {
   const router = useRouter();
   const transfer = useTransfer();
-  const [account, setAccount] = useState("");
-
-  const resolve = useResolveAccount(account);
-
   const {
+    control,
     register,
     handleSubmit,
-    control,
-    watch,
     formState: { errors },
-  } = useForm<FormShape>({
-    defaultValues: { toAccountNumber: "", amountMajor: "", note: "" },
+  } = useForm<TransferFormInput>({
+    resolver: zodResolver(transferFormSchema),
+    defaultValues: { toAccountNumber: "", amount: "", note: "" },
   });
 
-  const amountMajor = watch("amountMajor");
+  const accountNumber = useWatch({ control, name: "toAccountNumber" });
+  const amount = useWatch({ control, name: "amount" });
+  const recipient = useResolveAccount(accountNumber);
+  const complete = accountNumber.length === 10;
+  // `null` = the backend has no such account (see api.transaction.resolve).
+  const notFound = complete && recipient.data === null;
+  const preview = AmountMajorInput.safeParse(amount).success
+    ? formatMoney(majorToMinor(amount))
+    : null;
 
-  const onSubmit = handleSubmit(async (values) => {
-    // Validate the canonical contract shape (amount in minor units).
-    const minor = majorToMinor(values.amountMajor);
-    const parsed = transferSchema.safeParse({
-      toAccountNumber: values.toAccountNumber,
-      amount: minor,
-      note: values.note || undefined,
-    } satisfies Partial<TransferInput> as TransferInput);
-
-    if (!parsed.success) {
-      toast.error(parsed.error.issues[0]?.message ?? "Check the form and try again");
-      return;
-    }
-
-    try {
-      await transfer.mutateAsync({ input: parsed.data });
-      toast.success(
-        "Transfer successful",
-        `${formatMoney(minor)} sent to ${resolve.data?.accountName ?? values.toAccountNumber}`,
-      );
-      router.push("/transactions");
-      router.refresh();
-    } catch (err) {
-      if (err instanceof ApiError) toast.error(err.message);
-    }
+  const onSubmit = handleSubmit((values) => {
+    const minor = majorToMinor(values.amount);
+    transfer.mutate(
+      {
+        input: {
+          toAccountNumber: values.toAccountNumber,
+          amount: minor,
+          note: values.note || undefined,
+        },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Transfer successful", {
+            description: `${formatMoney(minor)} sent to ${recipient.data?.accountName ?? values.toAccountNumber}`,
+          });
+          router.push("/transactions");
+        },
+        onError: (error) => toast.error(getErrorMessage(error, "Transfer failed")),
+      },
+    );
   });
 
   return (
     <Card className="mx-auto max-w-md">
       <CardHeader>
-        <CardTitle>Send money</CardTitle>
+        <CardTitle>Transfer details</CardTitle>
+        <CardDescription>Transfers between iRate accounts arrive instantly.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={onSubmit} className="space-y-5" noValidate>
-          <div className="space-y-2">
-            <Label htmlFor="toAccountNumber">Recipient account number</Label>
-            <Controller
-              control={control}
-              name="toAccountNumber"
-              rules={{ pattern: { value: /^\d{10}$/, message: "Enter a 10-digit account number" } }}
-              render={({ field }) => (
-                <Input
-                  id="toAccountNumber"
-                  inputMode="numeric"
-                  maxLength={10}
-                  placeholder="1000000002"
-                  error={Boolean(errors.toAccountNumber)}
-                  {...field}
-                  onChange={(e) => {
-                    const digits = e.target.value.replace(/\D/g, "").slice(0, 10);
-                    field.onChange(digits);
-                    setAccount(digits);
-                  }}
-                />
-              )}
-            />
-            {/* Name enquiry result */}
-            {account.length === 10 ? (
-              <div className="flex items-center gap-2 text-sm">
-                {resolve.isLoading ? (
-                  <span className="flex items-center gap-1.5 text-muted-foreground">
-                    <Loader2 className="size-3.5 animate-spin" /> Resolving…
-                  </span>
-                ) : resolve.data ? (
-                  <span className="flex items-center gap-1.5 font-medium text-success">
-                    <CheckCircle2 className="size-4" /> {resolve.data.accountName}
-                  </span>
-                ) : (
-                  <span className="text-destructive">Account not found</span>
+        <form onSubmit={onSubmit} noValidate>
+          <FieldGroup className="gap-5">
+            <Field data-invalid={!!errors.toAccountNumber || notFound}>
+              <FieldLabel htmlFor="toAccountNumber">Recipient account number</FieldLabel>
+              <Controller
+                control={control}
+                name="toAccountNumber"
+                render={({ field }) => (
+                  <Input
+                    {...field}
+                    id="toAccountNumber"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={10}
+                    placeholder="1000000002"
+                    aria-invalid={!!errors.toAccountNumber || notFound}
+                    // Digits only — paste-friendly.
+                    onChange={(e) => field.onChange(e.target.value.replace(/\D/g, "").slice(0, 10))}
+                  />
                 )}
-              </div>
-            ) : null}
-          </div>
+              />
+              {complete && recipient.isFetching ? (
+                <FieldDescription className="flex items-center gap-1.5">
+                  <Spinner className="size-3.5" /> Checking account…
+                </FieldDescription>
+              ) : complete && recipient.data ? (
+                <FieldDescription className="flex items-center gap-1.5 font-medium text-success">
+                  <CheckCircle2 className="size-4" /> {recipient.data.accountName}
+                </FieldDescription>
+              ) : null}
+              <FieldError errors={[errors.toAccountNumber]}>
+                {notFound ? "No iRate account has this number" : undefined}
+              </FieldError>
+            </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="amountMajor">Amount (₦)</Label>
-            <Input
-              id="amountMajor"
-              inputMode="decimal"
-              placeholder="0.00"
-              error={Boolean(errors.amountMajor)}
-              {...register("amountMajor", {
-                required: "Enter an amount",
-                validate: (v) => Number(v) > 0 || "Amount must be greater than zero",
-              })}
-            />
-            {amountMajor && Number(amountMajor) > 0 ? (
-              <p className="text-xs text-muted-foreground">
-                You are sending {formatMoney(majorToMinor(amountMajor))}
-              </p>
-            ) : null}
-          </div>
+            <Field data-invalid={!!errors.amount}>
+              <FieldLabel htmlFor="amount">Amount (₦)</FieldLabel>
+              <Input
+                id="amount"
+                inputMode="decimal"
+                placeholder="0.00"
+                aria-invalid={!!errors.amount}
+                {...register("amount")}
+              />
+              {preview ? <FieldDescription>You are sending {preview}</FieldDescription> : null}
+              <FieldError errors={[errors.amount]} />
+            </Field>
 
-          <div className="space-y-2">
-            <Label htmlFor="note">Note (optional)</Label>
-            <Input id="note" placeholder="What's it for?" maxLength={140} {...register("note")} />
-          </div>
+            <Field data-invalid={!!errors.note}>
+              <FieldLabel htmlFor="note">Note (optional)</FieldLabel>
+              <Input
+                id="note"
+                placeholder="What's it for?"
+                maxLength={140}
+                aria-invalid={!!errors.note}
+                {...register("note")}
+              />
+              <FieldError errors={[errors.note]} />
+            </Field>
 
-          <Button
-            type="submit"
-            className="w-full"
-            loading={transfer.isPending}
-            disabled={account.length === 10 && !resolve.data}
-          >
-            {resolve.data ? `Send to ${resolve.data.accountName}` : "Send money"}
-          </Button>
+            <Button
+              type="submit"
+              className="w-full"
+              loading={transfer.isPending}
+              disabled={notFound || (complete && recipient.isFetching)}
+            >
+              {recipient.data ? `Send to ${recipient.data.accountName}` : "Send money"}
+            </Button>
+          </FieldGroup>
         </form>
       </CardContent>
     </Card>

@@ -27,16 +27,13 @@ describe("validateResponse", () => {
   });
 });
 
-function mockFetch(response: {
-  ok: boolean;
-  status: number;
-  body: unknown;
-}) {
-  const fn = vi.fn(async (_url: string | URL | Request, _init?: RequestInit) =>
-    new Response(JSON.stringify(response.body), {
-      status: response.status,
-      headers: { "Content-Type": "application/json" },
-    }),
+function mockFetch(response: { ok: boolean; status: number; body: unknown }) {
+  const fn = vi.fn(
+    async (_url: string | URL | Request, _init?: RequestInit) =>
+      new Response(JSON.stringify(response.body), {
+        status: response.status,
+        headers: { "Content-Type": "application/json" },
+      }),
   );
   vi.stubGlobal("fetch", fn);
   return fn;
@@ -78,7 +75,11 @@ describe("HttpClient", () => {
   });
 
   it("adds an Idempotency-Key to mutating requests", async () => {
-    const fn = mockFetch({ ok: true, status: 200, body: { success: true, message: "", data: null } });
+    const fn = mockFetch({
+      ok: true,
+      status: 200,
+      body: { success: true, message: "", data: null },
+    });
     const client = new HttpClient();
     await client.post("/transactions/transfer", { amount: 100 });
     const [, init] = fn.mock.calls[0] ?? [];
@@ -86,16 +87,19 @@ describe("HttpClient", () => {
     expect(headers["Idempotency-Key"]).toBeTruthy();
   });
 
-  it("invokes onUnauthorized for a 401", async () => {
+  it("throws an unauthorized ApiError for a 401", async () => {
     mockFetch({ ok: false, status: 401, body: { success: false, message: "Unauthorized" } });
-    const onUnauthorized = vi.fn();
-    const client = new HttpClient({ onUnauthorized });
-    await expect(client.get("/users/me")).rejects.toBeInstanceOf(ApiError);
-    expect(onUnauthorized).toHaveBeenCalledOnce();
+    const error = await new HttpClient().get("/users/me").catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect((error as ApiError).isUnauthorized).toBe(true);
   });
 
   it("serializes query params into the URL (pagination + search)", async () => {
-    const fn = mockFetch({ ok: true, status: 200, body: { success: true, message: "", data: null } });
+    const fn = mockFetch({
+      ok: true,
+      status: 200,
+      body: { success: true, message: "", data: null },
+    });
     const client = new HttpClient();
     await client.get("/admin/users", { params: { page: 2, limit: 10, search: "ada" } });
     const url = String(fn.mock.calls[0]?.[0]);
@@ -103,7 +107,11 @@ describe("HttpClient", () => {
   });
 
   it("omits undefined/null query params (e.g. empty search)", async () => {
-    const fn = mockFetch({ ok: true, status: 200, body: { success: true, message: "", data: null } });
+    const fn = mockFetch({
+      ok: true,
+      status: 200,
+      body: { success: true, message: "", data: null },
+    });
     const client = new HttpClient();
     await client.get("/admin/users", { params: { page: 1, limit: 10, search: undefined } });
     const url = String(fn.mock.calls[0]?.[0]);

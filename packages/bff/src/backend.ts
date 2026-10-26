@@ -26,7 +26,11 @@ function getSetCookies(res: Response): string[] {
   return single ? [single] : [];
 }
 
-/** Low-level call to the real backend. Never throws on non-2xx. */
+/**
+ * Low-level call to the real backend. Never throws: non-2xx responses are
+ * returned as-is and an unreachable backend becomes a 502 envelope, so every
+ * BFF route answers with JSON the browser client understands.
+ */
 export async function callBackend<T = unknown>(
   path: string,
   init: {
@@ -54,19 +58,25 @@ export async function callBackend<T = unknown>(
     headers.set("Cookie", `${cfg.backendRefreshCookie}=${init.refreshToken}`);
   }
 
-  const res = await fetch(url, {
-    method: init.method ?? "GET",
-    headers,
-    body:
-      init.body === undefined
-        ? undefined
-        : init.body instanceof FormData
-          ? init.body
-          : JSON.stringify(init.body),
-    // We manage cookies ourselves; do not let fetch persist them.
-    redirect: "manual",
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: init.method ?? "GET",
+      headers,
+      body:
+        init.body === undefined
+          ? undefined
+          : init.body instanceof FormData
+            ? init.body
+            : JSON.stringify(init.body),
+      // We manage cookies ourselves; do not let fetch persist them.
+      redirect: "manual",
+      cache: "no-store",
+    });
+  } catch {
+    const body = { success: false, message: "Could not reach the iRate API. Please try again." };
+    return { status: 502, ok: false, body: body as T, raw: JSON.stringify(body) };
+  }
 
   const raw = await res.text();
   let body: unknown = undefined;

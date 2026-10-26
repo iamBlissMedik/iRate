@@ -1,109 +1,150 @@
-# iRate — Fintech Web Platform
+# iRate web
 
-A monorepo with two Next.js apps — a **customer wallet** and an **admin dashboard** — for
-the iRate fintech platform. Users get a wallet with a 10-digit account number, can send and
-receive money, and track every transaction; admins manage users, review KYC, and credit
-wallets. It talks to a role-based backend (Express + Prisma + Redis, in `../irate-backend`).
+iRate is a fintech wallet. This monorepo holds its two web apps — the **customer wallet** and the
+**admin console** — and the packages they share. Customers get a wallet with a 10-digit account
+number, send and receive money, and complete KYC; admins manage users, review KYC, and credit
+wallets. The iRate API is a separate service; the apps reach it through `IRATE_API_BASE_URL`.
 
-Tokens never reach the browser (a Backend-for-Frontend auth model), and both apps share one
-contract, one API client, and one design system.
+Tokens never reach the browser: both web apps use a Backend-for-Frontend (BFF) that keeps the
+session in httpOnly cookies and calls the API server-side.
 
----
-
-## Apps
-
-| App           | Path         | Port | Purpose                                            |
-| ------------- | ------------ | ---- | -------------------------------------------------- |
-| Customer app  | `apps/user`  | 3000 | Wallet, send/receive money, transactions, KYC      |
-| Admin console | `apps/admin` | 9000 | Users, KYC review, wallet credits — **ADMIN-only** |
-
-## Features
-
-- 🔐 **Secure auth** — httpOnly-cookie sessions via a Backend-for-Frontend proxy (no tokens
-  in the browser), with transparent token refresh and idempotent mutations.
-- 💸 **Send money** — account-number lookup (name enquiry) → transfer, with a live recipient
-  check and exact minor-unit money math.
-- 📊 **Dashboards** — animated stat cards, recharts visualisations, and a real-time activity
-  feed.
-- 🪪 **KYC** — submit/track on the user side; review (approve/reject) on the admin side.
-- 🌗 **Light & dark mode** — one shared theme, togglable everywhere, `prefers-reduced-motion`
-  aware.
-- 📱 **Responsive** — mobile-first (bottom-nav on mobile, sidebar on desktop).
+| App           | Path         | Port | Purpose                                        |
+| ------------- | ------------ | ---- | ---------------------------------------------- |
+| Wallet        | `apps/user`  | 3000 | Balance, send money, activity, KYC, settings   |
+| Admin console | `apps/admin` | 9000 | Users, KYC review, wallet credits (ADMIN only) |
 
 ## Tech stack
 
-- **Next.js 16** (App Router) · **React 19** · **TypeScript** (strict)
-- **npm workspaces + Turborepo** (cached builds/lint/test)
-- **TanStack Query** (server state) · **react-hook-form + Zod** (forms/validation)
-- **Tailwind CSS v4** · **Radix UI** · **Recharts** · **Framer Motion**
+- **Next.js 16** (App Router, `proxy.ts`) · **React 19** · **TypeScript** (strict)
+- **npm workspaces + Turborepo**
+- **shadcn/ui** (Radix) · **Tailwind CSS v4** · light & dark themes via `next-themes`
+- **TanStack Query** for server state · **react-hook-form + Zod** for forms
+- **Recharts** · **Motion** · **Geist** font
 - **Vitest + Testing Library** · **Storybook**
 
-## Monorepo structure
+## Repository layout
 
+```text
+apps/
+  user/                 Wallet (Next.js)
+  admin/                Admin console (Next.js)
+packages/
+  contracts/            @irate/contracts  — Zod schemas + types for every request/response, money helpers
+  api-client/           @irate/api-client — typed fetch client, React Query hooks, provider
+  bff/                  @irate/bff        — Next route handlers (auth, proxy) and the route guard
+  ui/                   @irate/ui         — shadcn/ui components, iRate compositions, theme, charts
+  tsconfig/             @irate/tsconfig   — shared TypeScript configs
 ```
-iRate/
-├── apps/
-│   ├── user/        # Customer wallet (port 3000)
-│   ├── admin/       # Admin dashboard (port 9000)
-│   └── api/         # Express + Prisma + Redis backend (port 8000)
-├── packages/
-│   ├── contracts/   # @irate/contracts  — Zod schemas + inferred types (the API contract)
-│   ├── api-client/  # @irate/api-client — typed client + React Query hooks
-│   ├── bff/         # @irate/bff        — secure Next route handlers + middleware
-│   ├── ui/          # @irate/ui         — design system: theme, primitives, charts, motion
-│   └── tsconfig/    # @irate/tsconfig   — shared TypeScript configs
-├── turbo.json
-└── package.json
+
+Both Next apps follow the same shape:
+
+```text
+src/
+  app/                  routes; (auth) and signed-in route groups, api/ route handlers
+  components/           app-level layout (shell, table helpers)
+  features/<feature>/   screens' building blocks, one folder per domain (kebab-case files)
+  proxy.ts              route guard (createAuthProxy)
 ```
+
+Internal packages are consumed as TypeScript source (`transpilePackages`), so there is no build
+step between a package change and the apps.
 
 ## Getting started
 
-**Prerequisites:** Node 18.18+, and the backend running on `:8000` with Postgres + Redis
-(see `../irate-backend/README.md`).
+Requirements: Node 18.18+ and a running iRate API (by default at `http://localhost:8000/api/v1`).
 
 ```bash
-# 1. Install the workspace
 npm install
-
-# 2. Configure each app's BFF target (server-only — never NEXT_PUBLIC_)
 cp apps/user/.env.example  apps/user/.env.local
-cp apps/admin/.env.example apps/admin/.env.local   # IRATE_API_BASE_URL=http://localhost:8000/api/v1
-
-# 3. Run
-npm run dev:user     # http://localhost:3000
-npm run dev:admin    # http://localhost:9000  (ADMIN account required)
+cp apps/admin/.env.example apps/admin/.env.local
+npm run dev:user                # http://localhost:3000
+npm run dev:admin               # http://localhost:9000
 ```
 
-Seed credentials (from the backend): admin `admin@irate.dev` / `Admin123!`,
-user `ada@irate.dev` / `Password123!`.
+Point `IRATE_API_BASE_URL` in each `.env.local` at your API. Any backend that honours the contract in
+`@irate/contracts` works (for example the Go service in `../irate-core-go`). With its demo seed, sign
+in as `ada@irate.dev` / `Password123!` (customer) or `admin@irate.dev` / `Admin123!` (admin).
+
+## How it fits together
+
+### Requests
+
+```text
+browser ──► same-origin Next route ──► iRate API
+            /api/auth/*   login, register, logout, session  (sets/clears httpOnly cookies)
+            /api/v1/*     proxy: adds the Bearer token, refreshes once on 401
+```
+
+The browser client (`@irate/api-client`) only ever calls these same-origin routes, so the CSP can
+stay at `connect-src 'self'`. The route handlers are one-liners in each app that delegate to
+`@irate/bff`.
+
+### Sessions
+
+- Login stores the access token and the API's refresh token as httpOnly cookies on the app's own
+  domain. The admin app sets `allowedRoles: ["ADMIN"]`, so it never issues a session to customers.
+- `src/proxy.ts` guards pages. It renews an expired access token with the refresh token, so a
+  session lasts as long as the refresh token (7 days), not the 15-minute access token. A signed-in
+  account with the wrong role is sent to `/login?error=forbidden`.
+- If a session can't be refreshed, any API call returns 401 and the app redirects to
+  `/login?session=expired&from=…`, then returns there after sign-in. `from` is checked with
+  `safeRedirectPath`, so it can't point off-site.
+- Browsers share cookies across ports, so locally the admin app uses its own cookie names (set in
+  `apps/admin/.env.example`).
+
+### Data and errors
+
+- `@irate/contracts` is the single source of truth for shapes. Hooks in `@irate/api-client/react`
+  validate responses against it (a mismatch logs a warning in development rather than crashing).
+- Lookups where "not found" is a valid answer (name enquiry, KYC status) resolve to `null`.
+- Failed **queries** show a toast globally. Failed **mutations** are handled by the form that ran
+  them, so each error appears once, in context.
+- Money is integer **minor units**, sent as strings. Format with `formatMoney` (exact `BigInt` math);
+  forms take major units validated by `AmountMajorInput` and convert with `majorToMinor`.
+
+## UI and theming
+
+The design system is `@irate/ui`; see [packages/ui/README.md](packages/ui/README.md) for adding
+shadcn components. Highlights:
+
+- `components/ui/*` are shadcn/ui components; `components/*` are iRate compositions — `AppShell`
+  (sidebar layout for both apps), `AuthLayout`, `PageHeader`, `StatCard`, `Money`,
+  `KycStatusBadge`, `EmptyState`, `ErrorState`, `ThemeToggle`.
+- All colours are CSS variables in `packages/ui/src/styles/globals.css`, defined once for light and
+  once for dark. Components use semantic utilities (`bg-card`, `text-muted-foreground`), never raw
+  colours, so both themes stay in sync.
+- The theme toggle offers light, dark, and system. The sidebar remembers its collapsed state in the
+  `sidebar_state` cookie.
 
 ## Scripts
 
-Run from the repo root (Turborepo fans out to the workspaces):
+Run from the repository root; Turborepo fans out to the workspaces.
 
-| Command              | Description                                  |
-| -------------------- | -------------------------------------------- |
-| `npm run dev:user`   | Run the customer app (`:3000`)               |
-| `npm run dev:admin`  | Run the admin app (`:9000`)                  |
-| `npm run build`      | Production build of both apps                |
-| `npm run typecheck`  | Type-check every package + app (cached)      |
-| `npm run test`       | Run the Vitest suites                        |
-| `npm run lint`       | Lint all workspaces                          |
-| `npm run storybook --workspace=@irate/ui` | Component workshop (`:6006`) |
+| Command                                   | What it does                          |
+| ----------------------------------------- | ------------------------------------- |
+| `npm run dev:user` / `dev:admin`          | Run one app in development            |
+| `npm run build`                           | Production build of everything        |
+| `npm run typecheck`                       | `tsc` in every workspace              |
+| `npm run test`                            | Vitest in every package               |
+| `npm run lint`                            | ESLint in the Next apps               |
+| `npm run format`                          | Prettier (incl. Tailwind class order) |
+| `npm run storybook --workspace=@irate/ui` | Component workshop on port 6006       |
 
 ## Environment
 
-Each app reads a **server-only** `IRATE_API_BASE_URL` (the backend origin) used by the BFF.
-It must not be prefixed with `NEXT_PUBLIC_` — that would expose the backend to the browser
-and defeat the security model. See each app's `.env.example`.
+The web apps read only server-side variables (see each app's `.env.example`). Never prefix them
+with `NEXT_PUBLIC_`: that would ship the API address and cookie names to the browser and defeat the
+BFF.
 
-## Testing
-
-```bash
-npm run test        # Vitest across packages (money math, API client, BFF, UI)
-npm run typecheck   # tsc, cached by Turborepo
-```
+| Variable                       | Required | Default                                                      |
+| ------------------------------ | -------- | ------------------------------------------------------------ |
+| `IRATE_API_BASE_URL`           | yes      | `http://localhost:8000/api/v1` in development                |
+| `IRATE_ACCESS_COOKIE`          | no       | `irate_at`                                                   |
+| `IRATE_REFRESH_COOKIE`         | no       | `irate_rt`                                                   |
+| `IRATE_BACKEND_REFRESH_COOKIE` | no       | `refreshToken` (the cookie the API reads on `/auth/refresh`) |
+| `IRATE_ACCESS_MAX_AGE`         | no       | `900` seconds                                                |
+| `IRATE_REFRESH_MAX_AGE`        | no       | `604800` seconds                                             |
 
 ## License
 
-Private — All Rights Reserved.
+Private — all rights reserved.

@@ -1,5 +1,2 @@
-/* Pulls in Tailwind + the shared iRate design tokens (light/dark). */
+/* Tailwind + the shared iRate theme (tokens, light/dark, component sources). */
 @import "@irate/ui/styles.css";
-
-/* Tailwind must also scan the shared UI package for class names. */
-@source "../../../../packages/ui/src/**/*.{ts,tsx}";

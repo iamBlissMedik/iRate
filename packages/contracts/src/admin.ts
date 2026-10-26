@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AmountMinorInput, IsoDateTime, MoneyMinor } from "./common";
+import { AmountMajorInput, AmountMinorInput, IsoDateTime, MoneyMinor } from "./common";
 import { KYCStatus, UserRole } from "./enums";
 
 /**
@@ -111,6 +111,10 @@ export const creditWalletSchema = z.object({
 });
 export type CreditWalletInput = z.infer<typeof creditWalletSchema>;
 
+/** The credit-wallet form: same fields, but the amount is typed in major units. */
+export const creditWalletFormSchema = creditWalletSchema.extend({ amount: AmountMajorInput });
+export type CreditWalletFormInput = z.infer<typeof creditWalletFormSchema>;
+
 export const creditResultSchema = z
   .object({
     walletId: z.string().optional(),
@@ -136,9 +140,7 @@ export const adminKycRowSchema = z.object({
   verifiedAt: IsoDateTime.nullable().optional(),
   createdAt: IsoDateTime.optional(),
   updatedAt: IsoDateTime.optional(),
-  user: z
-    .object({ id: z.string(), email: z.string(), role: UserRole })
-    .optional(),
+  user: z.object({ id: z.string(), email: z.string(), role: UserRole }).optional(),
 });
 export type AdminKycRow = z.infer<typeof adminKycRowSchema>;
 

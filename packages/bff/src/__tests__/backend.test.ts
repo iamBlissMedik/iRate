@@ -78,7 +78,9 @@ describe("refreshSession (single-flight)", () => {
 
 describe("callBackend headers", () => {
   it("never duplicates Content-Type when the caller forwards a lower-case one", async () => {
-    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => new Response("{}", { status: 200 }));
+    const fetchMock = vi.fn(
+      async (_url: string, _init: RequestInit) => new Response("{}", { status: 200 }),
+    );
     vi.stubGlobal("fetch", fetchMock);
 
     await callBackend("/transactions/transfer", {

@@ -11,9 +11,6 @@ export type TransactionType = z.infer<typeof TransactionType>;
 export const TransactionDirection = z.enum(["in", "out"]);
 export type TransactionDirection = z.infer<typeof TransactionDirection>;
 
-export const LedgerType = z.enum(["CREDIT", "DEBIT", "FEE", "ADJUSTMENT"]);
-export type LedgerType = z.infer<typeof LedgerType>;
-
 export const KYCStatus = z.enum(["PENDING", "VERIFIED", "REJECTED"]);
 export type KYCStatus = z.infer<typeof KYCStatus>;
 

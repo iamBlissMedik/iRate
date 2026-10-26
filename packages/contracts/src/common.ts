@@ -16,65 +16,23 @@ export const AmountMinorInput = z
   .int("Amount must be a whole number of minor units")
   .positive("Amount must be greater than zero");
 
+/**
+ * A user-typed amount in major units, e.g. "1500" or "1,500.50". Forms validate
+ * with this and convert with `majorToMinor` before calling the API.
+ */
+export const AmountMajorInput = z
+  .string()
+  .trim()
+  .min(1, "Enter an amount")
+  .regex(/^(\d+|\d{1,3}(,\d{3})+)(\.\d{1,2})?$/, "Enter a valid amount, e.g. 1,500.50")
+  // zod runs refinements even after a failed check, so this must not throw.
+  .refine((v) => Number(v.replace(/,/g, "")) > 0, "Amount must be greater than zero");
+
 /** A single field-level validation error, as emitted by the backend. */
 export const FieldError = z.object({
   field: z.string(),
   message: z.string(),
 });
 export type FieldError = z.infer<typeof FieldError>;
-
-/**
- * Every backend response uses the `{ success, message, data }` envelope.
- * Build a typed schema for a given `data` payload.
- */
-export function apiResponse<T extends z.ZodTypeAny>(data: T) {
-  return z.object({
-    success: z.boolean(),
-    message: z.string(),
-    data,
-  });
-}
-
-/** The error envelope returned for non-2xx responses. */
-export const ApiErrorEnvelope = z.object({
-  success: z.literal(false),
-  message: z.string(),
-  code: z.string().optional(),
-  errors: z.array(FieldError).optional(),
-});
-export type ApiErrorEnvelope = z.infer<typeof ApiErrorEnvelope>;
-
-/** Generic envelope type (runtime-agnostic) for use in client generics. */
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
-/** Pagination request params shared by list endpoints. */
-export const PaginationQuery = z.object({
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-});
-export type PaginationQuery = z.infer<typeof PaginationQuery>;
-
-/** Wrap a row schema into a paginated list payload. */
-export function paginated<T extends z.ZodTypeAny>(row: T) {
-  return z.object({
-    items: z.array(row),
-    page: z.number().int(),
-    limit: z.number().int(),
-    total: z.number().int(),
-    totalPages: z.number().int(),
-  });
-}
-
-export interface Paginated<T> {
-  items: T[];
-  page: number;
-  limit: number;
-  total: number;
-  totalPages: number;
-}
 
 export const IsoDateTime = z.string();

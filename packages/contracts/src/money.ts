@@ -60,6 +60,15 @@ function currencySymbol(locale: string, currency: string): string {
   return part?.value ?? "";
 }
 
+/**
+ * Format a major-unit number (an animated or charted value) as currency,
+ * rounded to the nearest minor unit. Display only — format exact amounts from
+ * minor units with {@link formatMoney}.
+ */
+export function formatMajor(value: number, options?: Parameters<typeof formatMoney>[1]): string {
+  return formatMoney(Math.round(value * 100), options);
+}
+
 /** Convert a user-entered major-unit string/number to integer minor units. */
 export function majorToMinor(value: string | number): number {
   const n = typeof value === "string" ? Number(value.replace(/,/g, "")) : value;

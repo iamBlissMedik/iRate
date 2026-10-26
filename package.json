@@ -2,7 +2,7 @@
   "name": "irate",
   "version": "0.1.0",
   "private": true,
-  "description": "iRate — full-stack fintech monorepo (user + admin apps, API, shared packages).",
+  "description": "iRate web — the customer wallet and admin console (Next.js) with their shared packages.",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -11,23 +11,17 @@
     "dev": "turbo run dev",
     "dev:admin": "turbo run dev --filter=@irate/admin",
     "dev:user": "turbo run dev --filter=@irate/user",
-    "dev:api": "turbo run dev --filter=@irate/api",
     "build": "turbo run build",
     "build:admin": "turbo run build --filter=@irate/admin",
     "build:user": "turbo run build --filter=@irate/user",
-    "build:api": "turbo run build --filter=@irate/api",
     "start:admin": "npm run start --workspace=@irate/admin",
     "start:user": "npm run start --workspace=@irate/user",
-    "start:api": "npm run start --workspace=@irate/api",
-    "db:generate": "npm run db:generate --workspace=@irate/api",
-    "db:migrate": "npm run migrate --workspace=@irate/api",
-    "db:seed": "npm run seed --workspace=@irate/api",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:watch": "turbo run test:watch",
     "storybook": "turbo run storybook",
-    "format": "prettier --write \"**/*.{ts,tsx,md,json}\" --ignore-path .gitignore",
+    "format": "prettier --write \"**/*.{ts,tsx,mjs,css,md,json}\" --ignore-path .gitignore --ignore-path .prettierignore",
     "clean": "turbo run clean && rm -rf node_modules"
   },
   "devDependencies": {

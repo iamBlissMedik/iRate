@@ -1,5 +1,8 @@
-import { AppShell } from "@/components/app-shell";
+import { cookies } from "next/headers";
+import { Shell } from "@/components/shell";
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
-  return <AppShell>{children}</AppShell>;
+export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  // Restore the desktop sidebar's collapsed/expanded state (set by shadcn's sidebar).
+  const defaultOpen = (await cookies()).get("sidebar_state")?.value !== "false";
+  return <Shell defaultOpen={defaultOpen}>{children}</Shell>;
 }

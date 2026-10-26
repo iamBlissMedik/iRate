@@ -1,10 +1,9 @@
-"use client";
-
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { format } from "date-fns";
 import type { TransactionEntry } from "@irate/contracts";
 import { Money, cn } from "@irate/ui";
 
+/** One statement line: direction icon, counterparty, time, amount and running balance. */
 export function TransactionRow({ tx }: { tx: TransactionEntry }) {
   const incoming = tx.direction === "in";
   return (
@@ -18,13 +17,9 @@ export function TransactionRow({ tx }: { tx: TransactionEntry }) {
         {incoming ? <ArrowDownLeft className="size-5" /> : <ArrowUpRight className="size-5" />}
       </span>
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">
-          {tx.counterparty?.name ?? tx.description}
-        </p>
+        <p className="truncate text-sm font-medium">{tx.counterparty?.name ?? tx.description}</p>
         <p className="truncate text-xs text-muted-foreground">
-          {tx.counterparty?.accountNumber
-            ? `${tx.counterparty.accountNumber} · `
-            : ""}
+          {tx.counterparty?.accountNumber ? `${tx.counterparty.accountNumber} · ` : ""}
           {format(new Date(tx.createdAt), "d MMM, HH:mm")}
         </p>
       </div>
