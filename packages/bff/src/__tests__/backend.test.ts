@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { extractAccessToken, parseSetCookie, refreshSession } from "../backend";
+import { callBackend, extractAccessToken, parseSetCookie, refreshSession } from "../backend";
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -73,5 +73,24 @@ describe("refreshSession (single-flight)", () => {
     await refreshSession("token-B");
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("callBackend headers", () => {
+  it("never duplicates Content-Type when the caller forwards a lower-case one", async () => {
+    const fetchMock = vi.fn(async (_url: string, _init: RequestInit) => new Response("{}", { status: 200 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await callBackend("/transactions/transfer", {
+      method: "POST",
+      body: { amount: 1 },
+      accessToken: "tok",
+      headers: { "content-type": "application/json", "idempotency-key": "k-1" },
+    });
+
+    const sent = new Headers(fetchMock.mock.calls[0]![1].headers);
+    expect(sent.get("content-type")).toBe("application/json");
+    expect(sent.get("idempotency-key")).toBe("k-1");
+    expect(sent.get("authorization")).toBe("Bearer tok");
   });
 });

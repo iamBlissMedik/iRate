@@ -40,17 +40,18 @@ export async function callBackend<T = unknown>(
   const cfg = getBffConfig();
   const url = `${cfg.backendBaseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
-  const headers: Record<string, string> = {
-    Accept: "application/json",
-    ...init.headers,
-  };
+  // `Headers` is case-insensitive and `set` replaces: a forwarded browser
+  // "content-type" plus our "Content-Type" must not merge into the invalid
+  // "application/json, application/json" (strict backends answer 415).
+  const headers = new Headers({ Accept: "application/json" });
+  for (const [key, value] of Object.entries(init.headers ?? {})) headers.set(key, value);
   if (init.body !== undefined && !(init.body instanceof FormData)) {
-    headers["Content-Type"] = "application/json";
+    headers.set("Content-Type", "application/json");
   }
-  if (init.accessToken) headers.Authorization = `Bearer ${init.accessToken}`;
+  if (init.accessToken) headers.set("Authorization", `Bearer ${init.accessToken}`);
   if (init.refreshToken) {
     // Present the refresh token the way the backend expects (httpOnly cookie).
-    headers.Cookie = `${cfg.backendRefreshCookie}=${init.refreshToken}`;
+    headers.set("Cookie", `${cfg.backendRefreshCookie}=${init.refreshToken}`);
   }
 
   const res = await fetch(url, {
