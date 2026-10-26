@@ -13,6 +13,7 @@ export type { BffConfig } from "./config";
 export { clearAuthCookies, readAuthCookies, setAuthCookies } from "./cookies";
 export type { AuthTokens, CookieReader, CookieWriter } from "./cookies";
 export { callBackend, extractAccessToken } from "./backend";
+export { clientIpHeaders, resolveClientIp } from "./client-ip";
 export type { BackendResult } from "./backend";
 export { decodeJwtPayload, sessionUserFromToken } from "./jwt";
 export { applySession, resolveSession } from "./session";

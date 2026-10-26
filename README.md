@@ -144,6 +144,16 @@ BFF.
 | `IRATE_BACKEND_REFRESH_COOKIE` | no       | `refreshToken` (the cookie the API reads on `/auth/refresh`) |
 | `IRATE_ACCESS_MAX_AGE`         | no       | `900` seconds                                                |
 | `IRATE_REFRESH_MAX_AGE`        | no       | `604800` seconds                                             |
+| `IRATE_TRUSTED_PROXY_HOPS`     | no       | `0` — reverse proxies in front of the app                    |
+
+**Client IPs.** The BFF calls the API server-to-server, so on its own the API would see every
+customer as the BFF's address and share one login rate limit between them. The BFF therefore sends
+the browser's IP as a fresh `X-Forwarded-For`, read from the entry added by the outermost of the
+`IRATE_TRUSTED_PROXY_HOPS` proxies in front of the app, and never forwards the browser's own
+`X-Forwarded-*`, `Forwarded`, or `X-Real-IP` headers. Set it to the real number of proxies in
+production: too high lets clients spoof their IP, too low makes everyone look like the proxy. The
+API should trust exactly one hop (`trust proxy` = 1 in Express) and accept traffic only from the
+BFF.
 
 ## License
 

@@ -2,6 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse, type NextRequest } from "next/server";
 import type { UserRole } from "@irate/contracts";
 import { callBackend, extractAccessToken, refreshSession } from "./backend";
+import { clientIpHeaders } from "./client-ip";
 import { clearAuthCookies, readAuthCookies, setAuthCookies } from "./cookies";
 import { sessionUserFromToken } from "./jwt";
 import { applySession, isRejected, resolveSession } from "./session";
@@ -29,7 +30,13 @@ export function createLoginHandler(options: LoginHandlerOptions = {}) {
       return fail(400, "Invalid request body");
     }
 
-    const result = await callBackend("/auth/login", { method: "POST", body });
+    // Forward the browser's IP so the API's per-IP login limit is per customer,
+    // not one budget shared by everyone behind the BFF.
+    const result = await callBackend("/auth/login", {
+      method: "POST",
+      body,
+      headers: clientIpHeaders(req.headers),
+    });
     if (!result.ok) {
       return json(result.body ?? { success: false, message: "Login failed" }, result.status);
     }
@@ -63,7 +70,11 @@ export function createRegisterHandler() {
       return fail(400, "Invalid request body");
     }
 
-    const result = await callBackend("/auth/register", { method: "POST", body });
+    const result = await callBackend("/auth/register", {
+      method: "POST",
+      body,
+      headers: clientIpHeaders(req.headers),
+    });
     if (!result.ok) {
       return json(result.body ?? { success: false, message: "Registration failed" }, result.status);
     }
@@ -83,12 +94,17 @@ export function createRegisterHandler() {
 /* ------------------------------------------------------------ POST /logout */
 
 export function createLogoutHandler() {
-  return async function POST() {
+  return async function POST(req: NextRequest) {
     const store = await cookies();
     const { accessToken, refreshToken } = readAuthCookies(store);
 
     // Best-effort backend revocation; local cookies are cleared regardless.
-    await callBackend("/auth/logout", { method: "POST", accessToken, refreshToken });
+    await callBackend("/auth/logout", {
+      method: "POST",
+      accessToken,
+      refreshToken,
+      headers: clientIpHeaders(req.headers),
+    });
 
     clearAuthCookies(store);
     return ok({ authenticated: false }, "Signed out");
@@ -115,6 +131,14 @@ export interface ProxyOptions {
 
 const HOP_BY_HOP = new Set(["host", "connection", "content-length", "accept-encoding", "cookie"]);
 
+/**
+ * Client-address headers are never copied from the browser: they are
+ * client-controlled and would let anyone pick the IP the API rate-limits and
+ * audits. The BFF sends its own value instead (see client-ip.ts).
+ */
+const isClientAddressHeader = (key: string) =>
+  key === "forwarded" || key === "x-real-ip" || key.startsWith("x-forwarded-");
+
 export function createProxyHandler(options: ProxyOptions = {}) {
   const stripPrefix = options.stripPrefix ?? "/api/v1";
 
@@ -129,13 +153,16 @@ export function createProxyHandler(options: ProxyOptions = {}) {
     const { pathname, search } = req.nextUrl;
     const backendPath = `${pathname.slice(stripPrefix.length) || "/"}${search}`;
 
-    // Forward safe headers (notably Idempotency-Key for transfers).
+    // Forward safe headers (notably Idempotency-Key for transfers), plus the
+    // browser's IP as resolved through our trusted proxies.
     const headers: Record<string, string> = {};
     req.headers.forEach((value, key) => {
-      if (!HOP_BY_HOP.has(key.toLowerCase()) && key.toLowerCase() !== "authorization") {
+      const name = key.toLowerCase();
+      if (!HOP_BY_HOP.has(name) && name !== "authorization" && !isClientAddressHeader(name)) {
         headers[key] = value;
       }
     });
+    Object.assign(headers, clientIpHeaders(req.headers));
 
     const method = req.method.toUpperCase();
     const hasBody = method !== "GET" && method !== "HEAD";
